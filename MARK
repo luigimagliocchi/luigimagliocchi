@@ -1,0 +1,533 @@
+---
+title: "Consegna Magliocchi"
+author: "Luigi Magliocchi"
+date: "2023-01-13"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,warning = FALSE, message = FALSE )
+```
+
+
+```{r Library, include=FALSE}
+library(corrplot)
+library(mgcv)
+library(glmnet)
+library(leafpop)
+library(leaps)
+library(ggplot2)    
+library(leaflet)
+library(dplyr)
+library(MASS)
+```
+
+## CONSEGNA
+
+Si considerino i dati *kc_house_data* relativi alle vendite di abitazioni e si analizzi la relazione tra *price* e *sqft_living* tenendo conto, ove ritenuto necessario, delle altre caratteristiche delle case.
+L'obiettivo della seguente analisi è quello di evidenziare, se presenti, delle possibili relazioni tra grandezze mediante la costruzione di un modello di regressione.
+
+## IMPORTAZIONE DEI DATI
+
+Visto che nei dati abbiamo la presenza di longitudine e latitudine delle case osservate posso andare a rappresentare graficamente la loro posizione sulla cartina geografica. Ogni abitazione viene segnata con la presenza di un pallino il cui colore varia dal rosso al blu, in rosso vengono indicate le case meno costose e in blu le più costose.
+
+```{r echo=FALSE  }
+
+df <- read.csv("kc_house_data.csv", header=TRUE)
+
+attach(df)
+tail(df)
+summary(df)
+
+colors<-c("red","blue")
+pal<-colorFactor(colors,price)
+
+dfPopup<-df%>%
+  mutate(popup_info=paste(
+    "Prezzo della casa: ",price," $","</br>", 
+    "Coordinate: ",lat," ",long,"</br>"
+  ))
+
+df <- leaflet()
+df <- addTiles(df)
+df <- addCircles(df,data=dfPopup,lat= ~lat,lng= ~long, radius=~1,color=~pal(price),popup=~popup_info)
+df
+```
+
+## DESCRIZIONE DEL DATASET
+
+I dati che andiamo ad analizzare provengono da un dataset composto da 21597 osservazioni, con un totale di 21 variabili relative alle case vendute tra maggio 2014 e maggio 2015 nella contea di King (stato di Washington, USA). 
+Come risulta  evidente dal grafico la città di Seattle presenta dati parziali.
+Si nota che c'è un problema di collinearità tra le variabili \(sqft \; living\), \(sqft \; above\) e \( sqft \; basement\), in quanto la prima è somma delle prime due, si vedrà in seguito come trattare la situazione.
+
+## Analisi iniziale
+
+In questa prima parte andremo a studiare le possibili relazioni tra la variabile risposta *price* e le possibili covariate.
+
+```{r correlation}
+case <- dfPopup[,-1]
+case <- case[,-1]
+case <- case[,-15]
+case <- case[,-19]
+
+corrplot(cor(case))
+```
+
+La variabile risposta è imposta  a priori ed è la variabile *price*. Prima di poter scegliere il modello finale sul quale inserire le altre covariate vanno eseguite delle diverse prove con diversi modelli. Una volta trovato il modello dal quale partire si andrà a modificarlo inserendo se possibile fattori di interazione, spline, modifiche alle covariate e sui diversi modelli verranno effettuati dei test.
+
+Per poterli eseguire per prima cosa si divide il dataset con una proporzione jackknife per creare un train e test set.
+
+```{r train e test}
+case$waterfront<-as.factor(case$waterfront)
+```
+
+Verranno utilizzati:
+
+- il modello di regressione lineare;
+- il modello glm gamma;
+- il gam
+
+## ANALISI ESPLORATIVA
+
+Già ad una prima lettura dei dati risulta che la variabile aleartoria *price* sia troppo grande. Quindi al fine di renderla comparabile alle altre variabili si applicherà una trasformazione logaritmica in alcuni modelli ed in altri verrà riscalata.
+
+```{r echo=FALSE}
+require(moments)
+summary(price)
+```
+
+# Asimmetria
+
+```{r echo=FALSE}
+skewness(price)
+hist(price,prob=T,breaks=200)
+```
+
+&ensp;
+
+Come si vede dall'istogramma la variabile price risulta asimmetrica. Per ovviare al problema dell'asimmetria si applica la funzione logaritmo.
+
+```{r echo=FALSE}
+c(mean(log(price)),median(log(price)))
+
+```
+
+L'asimmetria tramite la trasformazione logartminca viene ridotta notevolmente passando da 4.023 a 0.43.
+
+```{r echo=FALSE}
+c(skewness(price,skewness(log(price))))
+par(mfrow=c(1,2))
+hist(price,prob=T,breaks=100)
+hist(log(price),prob=T,breaks=100)
+```
+
+&ensp;
+
+# Modello LM
+
+Il modello di regressione lineare richiede come condizione necessaria che la variabile risposta sia una variabile quantitativa con distribuzione dell'errore normale. La variabile *price* è una variabile quantitativa ma che segua una distribuzione dell'errore normale va provato.
+
+```{r echo=FALSE}
+summary(log(price))
+hist(log(price),prob=T,breaks=200)
+```
+
+&ensp;
+
+Per testare quanto la funzione logartmica della variabile "price" si allontana dalla distribuzione normale si può utilizzare la funzione di R "kurtosis" che nel caso della variabile \(\log(price)\) ci restituisce come risultato 3.69, abbastanza vicino a 3 che rappresenta la curtosi in una distribuzione normale.
+
+```{r echo=FALSE}
+c(kurtosis(log(price)),kurtosis(rnorm(length(price))))
+```
+Per avere un impatto visivo più forte si confronta la distribuzione della variabile \(\log(price)\) con la distribuzione di una \(N(E(\log(price),VAR(\log(price)))\)
+
+```{r echo=FALSE}
+hist(log(price),prob=T,breaks=50)
+curve(dnorm(x,mean(log(price)),sd(log(price))),col="red",lwd=2,add=T)
+```
+&ensp;
+
+Si testa l'ipotesi di normalità, visto l'elevata numerosità del campione, tramite il test.ks 
+
+```{r echo=FALSE}
+ks.test(log(price),mean(log(price)),sd(log(price))) 
+```
+
+Il risutato del test ci conferma di poter accettare l'ipotesi di normalità.
+
+&ensp;
+
+## Caso del lm
+
+Le variabili prese in considerazione sono \(\log(price)\) e \(log(sqft \; living)\) in modo da poter mantenere una relazione il più possibile lineare. Per fare un'analisi della relazione andremo ad utilizzare un diagramma di dispersione.
+
+```{r echo=FALSE}
+cor(log(price),log(sqft_living))
+```
+
+```{r echo=FALSE}
+plot(log(price)~log(sqft_living),pch=20,xlab="log(sqft_living)", ylab="log(price)", main = "Diagramma di dispersione")
+
+```
+
+&ensp;
+
+La correlazione positiva ci viene confermata anche dal  diagramma di dispersione.
+
+## Modello lineare semplice e semplice con uso di polinomi
+
+```{r echo=FALSE}
+
+lm<-lm(log(price)~log(sqft_living), data = case)
+
+lm_2<-lm(log(price)~log(sqft_living)+I(log(sqft_living)^2), data = case)
+
+summary(lm)
+summary(lm_2)
+
+AIC(lm)
+AIC(lm_2)
+
+
+```
+
+I coefficienti stimati sono significativi in entrambi i casi, ma il secondo modello presenta un AIC più piccole e per questo risulta migliore rispetto al primo. Rimane in tutti e due i modelli il problema dell'\(R^{2}\) piccolo. Si procede con l'analisi dei residui per il caso con covariata parabolica.
+
+```{r echo=FALSE}
+plot(lm_2)
+```
+
+&ensp;
+
+Nel qq-plot vediamo che le code della distribuzione  sono leggere e che la maggior parte delle osservazioni sono presenti al centro. Risulta poi il problema della normalità dei residui confermato dal test di *Kolmogorov-Smirnov*.
+
+```{r echo=FALSE}
+ks.test(rstandard(lm_2),rnorm(length(price),0,1))
+```
+
+```{r echo=FALSE}
+hist(rstandard(lm_2),probability = T, breaks=100, xlab="Model's standardized residuals", main="Histogram of model's standardized residuals")
+curve(dnorm(x,0,1),add=T)
+
+```
+
+## Modello glm con relazione quadratica
+
+Anche nel caso del modello glm andremo ad utilizzare variabili alle quali è stata applicata una trasformazione logaritmica con la relazione quadratica nella covariata. 
+
+```{r echo=FALSE}
+glm_2<-glm(I(log(price))~I(log(sqft_living))+I((log(sqft_living)^(2))),data=case,family=Gamma(link="log"))
+
+summary(glm_2)
+
+AIC(glm_2)
+```
+
+&ensp;
+
+I coefficienti sono significativi e il modello rispetto al modello nullo risulta anch'esso significativo. 
+L'AIC risulta migliorato rispetto al modello precedente. Si procede qui di seguito all'analisi dei residui.
+
+
+```{r echo=FALSE}
+plot(glm_2)
+ks.test(rstandard(glm_2),rnorm(length(price),0,1))
+```
+
+&ensp;
+
+Il qq plot mette immediatamente in evidenza che l'assunzione di normalità dei residui non è rispettata (confermata dal test KS). Quindi non risulta essere un modello utilizzabile in particolar modo per i valori estremi.
+
+## Modello additivo per \(\log(price)\)
+
+```{r echo=FALSE}
+require(mgcv)
+ma <- gam(log(price)~s(log(sqft_living)),data=case)
+summary(ma)
+AIC(ma)
+```
+&ensp;
+
+Come si può vedere dai risultati i coefficienti per intercetta e spline risultano significativi ma esattamente come è successo per tutti i  modelli visti precedentemente si nota un livello dell'\(R^2\) molto basso. Procedendo adesso con un'analisi grafica si può vedere che il modello additivo tende a comportarsi meglio rispetto al modello lineare e al glm gamma nonostante anch'esso pecchi di un \(R^2\) molto basso.
+
+
+```{r echo=FALSE}
+
+par(mfrow=c(2,3))
+plot(ma)
+gam.check(ma)
+```
+
+&ensp;
+
+Le analisi grafiche proposte sembrano suggerire un miglioramento rispetto al modello lineare eal glm analizzati in precedenza per quanto rigurada la normalità dei residui. 
+
+Ma solamente dai grafici non è possibile interpretare bene il livello di miglioramento nel passaggio da un modello ad un altro quindi al fine di provarlo si procederà con un confronto tra i diveri AIC.
+
+```{r echo=FALSE}
+AIC(lm_2)
+AIC(glm_2)
+AIC(ma)
+```
+
+&ensp;
+
+# Modello con ulteriori variabili esplicative
+
+Prima di addentrarci nel modello si sistemano i dati e si va a fare un'analisi esplorativa iniziale sulle diverse variabili che i dati ci propongono.
+
+## Pulizia dati
+
+Analizzando le 21 varibili forniteci si nota che le variabili "id" e "zipcod" non sono informative quindi di conseguenza si procede alla loro rimozione.
+
+```{r echo=FALSE}
+
+sqft_living15.differenza<-c(rep(0,length(sqft_living15)))
+for(i in 1:length(sqft_living15)){
+  if(sqft_living15[i]==sqft_living[i]){
+    sqft_living15.differenza[i]=0
+  }
+  else{
+    sqft_living15.differenza[i]=abs(sqft_living15[i]-sqft_living[i])
+  }
+}
+
+sqft_lot15.differenza<-c(rep(0,length(sqft_lot15)))
+for(i in 1:length(sqft_lot15)){
+  if(sqft_lot15[i]==sqft_lot[i]){
+    sqft_lot15.differenza[i]=0
+  }
+  else{
+    sqft_lot15.differenza[i]=abs(sqft_lot15[i]-sqft_lot[i])
+  }
+}
+
+case <- case[,-18]
+case <- case[,-17]
+house <-cbind(case,sqft_lot15.differenza)
+house1 <- cbind(house, sqft_living15.differenza)
+
+house1$price <- log(house1$price)
+house1$sqft_living <- log(house1$sqft_living)
+house1$sqft_lot<- log(house1$sqft_lot)
+house1$sqft_above<-log(house1$sqft_above)
+house1$sqft_basement<-log(house1$sqft_basement)
+house1$sqft_lot15.differenza<-sqrt(house1$sqft_lot15.differenza)
+house1$sqft_living15.differenza<-sqrt(house1$sqft_living15.differenza)
+
+house_completo <- cbind(house1,date)
+
+set.seed(17)
+s<-sample(dim(house1)[1],dim(house1)[1]*0.75)
+test<-house1[-s,]
+train<-house1[s,]
+```
+
+### Si prosegue con un'analisi esplorativa delle variabili risposta
+
+#### Yrbuilt
+
+Questa variabile  indica l'anno di costruzione dell'abitazione ed è una variabile aleatoria di tipo numerico. E' stata riscalata così da avere il valore 0 per le case più nuove costruite nel 2015 e man mano che cresce il valore aumenta anche l'età di costruzione delle case.
+
+
+```{r echo=FALSE}
+min(yr_built)
+max(yr_built)
+
+yr_built<-(2015-yr_built)
+hist(yr_built,prob=T,breaks = 200)
+
+plot(log(price)~yr_built)
+cor(log(price),yr_built)
+```
+
+&ensp;
+
+#### Long e lat
+
+Qui di seguito si vanno ad effettuare delle trasformazioni sulle variabili long e lat in modo che appartengono all'insieme \(R^{+}\)
+
+
+```{r echo=FALSE}
+par(mfrow=c(1,2))
+
+long<-(long-min(long))
+hist(long,prob=T,breaks=100)
+plot(log(price)~long)
+cor(log(price),long)
+
+lat<-(lat-min(lat))
+hist(lat,prob=T,breaks=100)
+plot(price~lat)
+cor(price,lat)
+```
+
+&ensp;
+
+#### Sqft_living15
+
+Questa variabile indica i piedi quadri della zona giorno del 2015 ed è una variabile di tipo numerico.
+
+```{r echo=FALSE}
+
+sqft_living15.differenza<-c(rep(0,length(sqft_living15)))
+for(i in 1:length(sqft_living15)){
+  if(sqft_living15[i]==sqft_living[i]){
+    sqft_living15.differenza[i]=0
+  }
+  else{
+    sqft_living15.differenza[i]=abs(sqft_living15[i]-sqft_living[i])
+  }
+}
+
+cor(price,sqft_living15.differenza)
+hist(sqft_living15.differenza,prob=T,breaks=100)
+plot(price~sqft_living15.differenza)
+
+```
+
+&ensp;
+
+#### Sqftlot15 
+
+Questa variabile indica i piedi quadri del lotto nel 2015 ed è una variabile di tipo numerico.
+
+```{r echo=FALSE}
+sqft_lot15.differenza<-c(rep(0,length(sqft_lot15)))
+for(i in 1:length(sqft_lot15)){
+  if(sqft_lot15[i]==sqft_lot[i]){
+    sqft_lot15.differenza[i]=0
+  }
+  else{
+    sqft_lot15.differenza[i]=abs(sqft_lot15[i]-sqft_lot[i])
+  }
+}
+
+cor(price,sqft_lot15.differenza)
+hist(sqft_lot15.differenza,prob=T,breaks=100)
+plot(price~sqft_lot15.differenza)
+
+
+```
+
+&ensp;
+
+#### Date
+
+Questa variabile indica la data in cui l'abitazione è stata venduta, è una variabile di tipo stringa.
+
+```{r echo=FALSE}
+date<-as.Date(date,"%m/%d/%y")
+plot(date,log(price))
+
+```
+
+&ensp;
+
+Essendo una variabile di tipo stringa prima di poterla utilizzare va trasformata in una variabile di tipo data. Una volta effettuato questo passaggio si plottano le variabili. 
+Come si può vedere dai dati non sembra esserci correlazione tra quando la casa viene venduta e il suo prezzo.
+
+# STIMA DEL MODELLO
+
+```{r echo=FALSE}
+
+require(mgcv)
+
+mod.gam1 <- gam(price ~ s(sqft_living) + bedrooms + bathrooms +  sqft_lot + floors + waterfront + view + condition + grade + yr_built + sqft_above + yr_renovated + lat + long + sqft_living15.differenza + sqft_lot15.differenza, data=train)
+
+plot(test$sqft_living, test$price)
+points(test$sqft_living, predict(mod.gam1,test), col="red", pch=3)
+
+summary(mod.gam1)
+
+par(mfrow=c(2,3))
+gam.check(mod.gam1)
+plot.gam(mod.gam1)
+AIC(mod.gam1)
+```
+
+&ensp;
+
+Al termine di questa fase si è raggiunto un modello che potrebbe sembrare soddisfacente ma per migliorarlo ulteriomente si possono aggiungere ulteriori spline e e successivamente anche possibili effetti di interazione.
+
+###  Ulteriori spline
+
+```{r echo=FALSE}
+mod.gam3 <- gam(price ~ s(sqft_living) + bedrooms + bathrooms +  s(sqft_lot) + floors + waterfront + view + condition + grade + yr_built + sqft_above + yr_renovated + lat + long + sqft_living15.differenza + sqft_lot15.differenza, data=train)
+
+plot(test$sqft_living, test$price)
+points(test$sqft_living, predict(mod.gam3,test),col="red",pch=3)
+
+par(mfrow=c(2,3))
+
+gam.check(mod.gam3)
+plot.gam(mod.gam3)
+summary(mod.gam3)
+AIC(mod.gam3)
+```
+
+&ensp;
+
+```{r echo=FALSE}
+
+mod.gam4 <- gam(price ~ s(sqft_living) + bedrooms + bathrooms +  s(sqft_lot) + floors + waterfront + view + condition + grade + yr_built + s(sqft_above) + yr_renovated + lat + long + sqft_living15.differenza + sqft_lot15.differenza, data=train)
+
+plot(test$sqft_living, test$price)
+points(test$sqft_living, predict(mod.gam4,test),col="red",pch=3)
+
+par(mfrow=c(3,3))
+gam.check(mod.gam4)
+plot.gam(mod.gam4)
+summary(mod.gam4)
+AIC(mod.gam4)
+```
+
+&ensp;
+
+### Effetti di interazione
+
+```{r echo=FALSE}
+
+mod.gam5 <- gam(price ~ s(sqft_living) + bedrooms + bathrooms +  s(sqft_lot) + floors + waterfront + view + condition*grade + yr_built + s(sqft_above) + yr_renovated + lat + long + sqft_living15.differenza + sqft_lot15.differenza, data=train)
+
+plot(test$sqft_living, test$price)
+points(test$sqft_living, predict(mod.gam5,test),col="red",pch=3)
+
+par(mfrow=c(3,3))
+gam.check(mod.gam5)
+plot.gam(mod.gam5)
+summary(mod.gam5)
+AIC(mod.gam5)
+```
+
+&ensp;
+
+Qui vado a togliete qualche interazione e sostituirla con altre.
+
+```{r echo=FALSE}
+
+mod.gam6 <- gam(price ~ s(sqft_living) + bedrooms + bathrooms +  s(sqft_lot) + floors + waterfront + view + condition + grade + yr_built + s(sqft_above) + yr_renovated + lat + long + sqft_living15.differenza*sqft_lot15.differenza, data=train)
+
+plot(test$sqft_living, test$price)
+points(test$sqft_living, predict(mod.gam6,test),col="red",pch=3)
+
+
+par(mfrow=c(2,3))
+
+summary(mod.gam6)
+gam.check(mod.gam6)
+plot.gam(mod.gam6)
+AIC(mod.gam6)
+```
+
+&ensp;
+
+Il procedimento fatto fin ora potrebbe essere reiterato provando ulteriori interazioni tra le diverse variabili aggiungendo ulteriori spline alla ricerca di un modello che possa approssimare ancora meglio la distribuzione del prezzo.
+
+## Conclusione
+
+Negli utimi modelli visti ed in particolare nell'ultimo modello gam con l'interazione tra *sqft_living15.differenza* e *sqft_lot15.differenza* vediamo un AIC molto basso il che lo rende di gran lunga il miglior modello tra quelli visti.
+L'indice di Akaike è calcolato come: 
+$$AIC = 2(n-log(L))$$
+quindi avere un valore molto basso indica solamente che la log_verosimiglianza è maggiore rispetto al numero dei parametri.
