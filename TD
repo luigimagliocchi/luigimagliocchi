@@ -1,0 +1,2910 @@
+library(shiny)
+
+# Autore : MAgliocchi Luigi
+# Progetto : Tecnica danni
+
+if (interactive()) {
+  ui <- fluidPage(
+    navbarPage(
+      "Progetto Tecnica Danni: Magliocchi Luigi",
+      tabPanel("Simulazione con uniforme",
+               titlePanel("Simulazione con uniforme"),
+               # Sidebar layout with input and output definitions ----
+               sidebarLayout(
+                 sidebarPanel(
+                   
+                   selectInput("plotType", "Plot Type",
+                               c(ecdf = "ecdf", density = "density",qqnorm = "qqnorm")
+                   ),
+                   sliderInput(inputId = "bins",
+                               label = "Numero di osservazioni:",
+                               min = 10,
+                               max = 10000,
+                               value = 50,
+                               step=5),
+                   
+                   
+                   hr("Media"),
+                   fluidRow(column(12, verbatimTextOutput("media"))),
+                   
+                   hr("Varianza"),
+                   fluidRow(column(12, verbatimTextOutput("varianza"))),
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                 ),
+                 
+                 
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   
+                   p(" Affinché la simulazione sia efficace è necessario che gli enti che simulano l'ente originale siano in numero elevato facilmente e rapidamente osservabili"),
+                   withMathJax("$$Unif \\sim (0,1)$$"),
+                   
+                   
+                   # Output: Histogram ----
+                   plotOutput(outputId = "plot"),
+                 )
+               )
+      ),
+      tabPanel("Simulazione Box-Muller",
+               titlePanel("Simulazione con Box-Muller"),
+               
+               # Sidebar layout with input and output definitions ----
+               sidebarLayout(
+                 
+                 # Sidebar panel for inputs ----
+                 sidebarPanel(
+                   selectInput("plotType1", "Plot Type",
+                               c(ecdf = "ecdf1", density = "density1")
+                   ),
+                   
+                   # Input: scegli numero di osservazioni ----
+                   sliderInput(inputId = "bins1",
+                               label = "numero di osservazioni:",
+                               min = 1,
+                               max = 1000,
+                               value = 20,
+                               step=5),
+                   sliderInput(inputId = "varianza",
+                               label = "Varianza:",
+                               min = 0,
+                               max = 500,
+                               value = 1,
+                               step=1),
+                   sliderInput(inputId = "media",
+                               label = "Media:",
+                               min = -50,
+                               max = 50,
+                               value = 0,
+                               step=1),
+                   
+                   
+                   
+                   
+                   hr("Media"),
+                   fluidRow(column(12, verbatimTextOutput("media1"))),
+                   
+                   hr("Varianza"),
+                   fluidRow(column(12, verbatimTextOutput("varianza1"))),
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                 ),
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   
+                   withMathJax("$$W_{1}= \\sqrt{-2\\log U_{1}} \\cos (2\\pi U_{2})$$"),
+                   withMathJax("$$W_{2}= \\sqrt{-2\\log U_{1}} \\sin (2\\pi U_{2})$$"),
+                   
+                   
+                   
+                   # Output: Histogram ----
+                   plotOutput(outputId = "distPlot")
+                 )
+               )
+      ),
+      tabPanel("simulazione con log normale",
+               titlePanel("Simulazione con log-normale"),
+               sidebarLayout(
+                 sidebarPanel(
+                   selectInput("plotType2", "Plot Type",
+                               c(ecdf = "ecdf2", density = "density2",qlnorm = "qlnorm")
+                   ),
+                   sliderInput(inputId = "bins2",
+                               label = "Numero di osservazioni:",
+                               min = 30,
+                               max = 10000,
+                               value = 50,
+                               step=5),
+                   sliderInput(inputId = "varianza2",
+                               label = "Varianza:",
+                               min = 0,
+                               max = 50,
+                               value = 1,
+                               step=1),
+                   sliderInput(inputId = "media2",
+                               label = "Media:",
+                               min = -100,
+                               max = 100,
+                               value = 0,
+                               step=1),
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   hr("Media"),
+                   fluidRow(column(12, verbatimTextOutput("media2"))),
+                   
+                   hr("Varianza"),
+                   fluidRow(column(12, verbatimTextOutput("varianza2"))),
+                   
+                   
+                   hr("Quantili"),
+                   fluidRow(column(12, verbatimTextOutput("quantili"))),
+                   
+                   
+                   
+                   
+                   
+                   
+                 ),
+                 
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   withMathJax("$$\\text{LogNorm}\\sim \\log Norm(\\mu;\\sigma^{2})$$"),
+                   
+                   # Output: Histogram ----
+                   plotOutput(outputId = "distplot2"),
+                 )
+               )
+      ),
+      tabPanel("Simulazione con esponenziale ",
+               titlePanel("Simulazione con esponenziale"),
+               sidebarLayout(
+                 sidebarPanel(
+                   
+                   # Sidebar layout with input and output definitions ----
+                   selectInput("plotType4", "Plot Type",
+                               c(ecdf = "ecdf4", density = "density4", istogramma ="hist4")
+                   ),
+                   
+                   
+                   sliderInput(inputId = "bins4",
+                               label = "Numero di osservazioni:",
+                               min = 30,
+                               max = 10000,
+                               value = 50,
+                               step=5),
+                   
+                   sliderInput(inputId = "rho",
+                               label = "rho :",
+                               min = 1,
+                               max = 50,
+                               value = 1,
+                               step=1),
+                   
+                   hr("Media"),
+                   fluidRow(column(12, verbatimTextOutput("media4"))),
+                   
+                   hr("Varianza"),
+                   fluidRow(column(12, verbatimTextOutput("varianza4")))
+                   
+                 ),
+                 
+                 
+                 
+                 
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   withMathJax("$$\\text{exp}\\sim \\exp(\\rho)$$"),
+                   
+                   
+                   # Output: Histogram ----
+                   plotOutput(outputId = "distplot4"),
+                 )
+               )
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+      ),
+      tabPanel("Simulazione con gamma ",
+               titlePanel("Simulazione con gamma"),
+               sidebarLayout(
+                 sidebarPanel(
+                   
+                   # Sidebar layout with input and output definitions ----
+                   selectInput("plotType5", "Plot Type",
+                               c(ecdf = "ecdf5", density = "density5",istogramma="hist5")
+                   ),
+                   
+                   
+                   
+                   sliderInput(inputId = "bins5",
+                               label = "Numero di osservazioni:",
+                               min = 30,
+                               max = 10000,
+                               value = 50,
+                               step=5),
+                   
+                   sliderInput(inputId = "alpha5",
+                               label = "parametro alpha :",
+                               min = 1,
+                               max = 50,
+                               value = 5,
+                               step=1),
+                   sliderInput(inputId = "rho5",
+                               label = "rho :",
+                               min = 1,
+                               max = 50,
+                               value = 1,
+                               step=1),
+                   
+                   hr("Media"),
+                   fluidRow(column(12, verbatimTextOutput("media5"))),
+                   
+                   hr("Varianza"),
+                   fluidRow(column(12, verbatimTextOutput("varianza5")))
+                   
+                   
+                   
+                 ),
+                 
+                 
+                 
+                 
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   withMathJax("$$\\text{Gamma}\\sim (\\alpha;\\rho)$$"),
+                   
+                   
+                   # Output: Histogram ----
+                   plotOutput(outputId = "distplot5"),
+                 )
+               )
+               
+               
+               
+               
+      ),
+      
+      #inserisco parte panel gella gamma alpha alpha
+      tabPanel("Simulazione con gamma alpha alpha ",
+               titlePanel("Simulazione con gamma (alpha, alpha)"),
+               sidebarLayout(
+                 sidebarPanel(
+                   
+                   # Sidebar layout with input and output definitions ----
+                   selectInput("plotType6", "Plot Type",
+                               c(ecdf = "ecdf6", density = "density6",istogramma="hist6")
+                   ),
+                   
+                   
+                   
+                   sliderInput(inputId = "bins6",
+                               label = "Numero di osservazioni:",
+                               min = 30,
+                               max = 10000,
+                               value = 100,
+                               step=5),
+                   
+                   sliderInput(inputId = "alpha6",
+                               label = "parametro alpha :",
+                               min = 0,
+                               max = 10,
+                               value = 2,
+                               step=0.05),
+                   
+                   
+                   hr("Media"),
+                   fluidRow(column(12, verbatimTextOutput("media6"))),
+                   
+                   hr("Varianza"),
+                   fluidRow(column(12, verbatimTextOutput("varianza6")))
+                   
+                   
+                   
+                 ),
+                 
+                 
+                 
+                 
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   withMathJax("$$\\text{Gamma}\\sim (\\alpha;\\alpha)$$"),
+                   
+                   
+                   # Output: Histogram ----
+                   plotOutput(outputId = "distplot6"),
+                 )
+               )
+      ),
+      
+      
+      #simulazione di poisson parte 7
+      tabPanel("Simulazione con poisson",
+               titlePanel("Simulazione con Poisson"),
+               sidebarLayout(
+                 sidebarPanel(
+                   
+                   # Sidebar layout with input and output definitions ----
+                   selectInput("plotType7", "Plot Type",
+                               c(ecdf = "ecdf7")
+                   ),
+                   
+                   
+                   
+                   sliderInput(inputId = "bins7",
+                               label = "Numero di osservazioni:",
+                               min = 30,
+                               max = 10000,
+                               value = 100,
+                               step=5),
+                   
+                   sliderInput(inputId = "lambda7",
+                               label = "parametro lambda :",
+                               min = 0,
+                               max = 10,
+                               value = 3,
+                               step=0.05),
+                   
+                   #k = numero massimo di n che testa#
+                   
+                   
+                   
+                   
+                   hr("Media"),
+                   fluidRow(column(12, verbatimTextOutput("media7"))),
+                   
+                   hr("Varianza"),
+                   fluidRow(column(12, verbatimTextOutput("varianza7")))
+                   
+                   
+                   
+                 ),
+                 
+                 
+                 
+                 
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   
+                   
+                   
+                   # Output: Histogram ----
+                   plotOutput(outputId = "distplot7"),
+                 )
+               )
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+      ),
+      #parte 8 simulazione con binomiale negativa
+      
+      tabPanel("Simulazione con binomiale negativa",
+               titlePanel("Simulazione con Binomiale negativa"),
+               sidebarLayout(
+                 sidebarPanel(
+                   
+                   # Sidebar layout with input and output definitions ----
+                   selectInput("plotType8", "Plot Type",
+                               c(ecdf = "ecdf8",istogramma="barplot8")
+                   ),
+                   
+                   
+                   
+                   sliderInput(inputId = "bins8",
+                               label = "Numero di osservazioni:",
+                               min = 30,
+                               max = 10000,
+                               value = 100,
+                               step=5),
+                   
+                   sliderInput(inputId = "lambda8",
+                               label = "parametro lambda :",
+                               min = 0,
+                               max = 10,
+                               value = 3,
+                               step=0.05),
+                   sliderInput(inputId = "alpha8",
+                               label = "parametro alpha :",
+                               min = 0,
+                               max = 10,
+                               value = 1,
+                               step=0.05),
+                   
+                   #k = numero massimo di n che testa#
+                   
+                   
+                   
+                   
+                   hr("Media"),
+                   fluidRow(column(12, verbatimTextOutput("media8"))),
+                   
+                   hr("Varianza"),
+                   fluidRow(column(12, verbatimTextOutput("varianza8")))
+                   
+                   
+                   
+                 ),
+                 
+                 
+                 
+                 
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   p("La distribuzione binomiale negativa si può ottenere come mistura di poisson con misturante gamma "),
+                   withMathJax("$$N' | \\Theta=\\theta \\sim P(\\lambda\\theta)$$"),
+                   withMathJax("$$\\Theta\\sim \\text{Gamma}(\\alpha;\\alpha) $$"),
+                  
+                   # Output: Histogram ----
+                   plotOutput(outputId = "distplot8"),
+                 )
+               )
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+      ),
+      tabPanel("Simulazione con poisson composta",
+               
+               titlePanel("Simulazione con Poisson composta con metodo diretto"),
+               sidebarLayout(
+                 sidebarPanel(
+                   
+                   # Sidebar layout with input and output definitions ----
+                   selectInput("plotType9", "Plot Type",
+                               c(ecdf = "ecdf9",istogramma="barplot9")
+                   ),
+                   
+                   
+                   
+                   sliderInput(inputId = "bins9",
+                               label = "Numero di osservazioni:",
+                               min = 30,
+                               max = 10000,
+                               value = 100,
+                               step=5),
+                   
+                   sliderInput(inputId = "s19",
+                               label = "primo seed :",
+                               min = 1,
+                               max = 100,
+                               value = 2,
+                               step=1),
+                   sliderInput(inputId = "s29",
+                               label = "secondo seed :",
+                               min = 1,
+                               max = 100,
+                               value = 5,
+                               step=1),
+                   sliderInput(inputId = "media9",
+                               label = "media :",
+                               min = 0,
+                               max = 100,
+                               value = 3,
+                               step=0.5),
+                   sliderInput(inputId = "varianza9",
+                               label = "varianza :",
+                               min = 0,
+                               max = 100,
+                               value = 2,
+                               step=0.5),
+                   sliderInput(inputId = "lambda9",
+                               label = "parametro lambda :",
+                               min = 0,
+                               max = 10,
+                               value = 3,
+                               step=0.05),
+                   
+                   
+                   
+                   
+                   
+                   
+                   hr("Media"),
+                   fluidRow(column(12, verbatimTextOutput("media9"))),
+                   
+                   hr("Varianza"),
+                   fluidRow(column(12, verbatimTextOutput("varianza9")))
+                   
+                   
+                   
+                 ),
+                 
+                 
+                 
+                 
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   p("Si basa sull'osservazione che X è funzione di un processo stocastico con componenti non stocasticamente dipendenti"),
+                   withMathJax("$$\\text{X} = (\\varphi(N,Y_{1},Y_{2},...))$$"),
+                   
+                   # Output: Histogram ----
+                   plotOutput(outputId = "distplot9"),
+                 )
+               )
+               
+               
+               
+               
+               
+               
+               
+               
+      ),
+      
+      #parte ui della WF parte 10
+      
+      tabPanel("Simulazione con W.F",
+               titlePanel("Metodo Basato sull'approssimazione di Wilson-Hilferty"),
+               sidebarLayout(
+                 sidebarPanel(
+                   
+                   # Sidebar layout with input and output definitions ----
+                   selectInput("plotType10", "Plot Type",
+                               c(ecdf = "ecdf10",istogramma="barplot10")
+                   ),
+                   
+                   
+                   
+                   sliderInput(inputId = "bins10",
+                               label = "Numero di osservazioni:",
+                               min = 30,
+                               max = 10000,
+                               value = 100,
+                               step=5),
+                   
+                   sliderInput(inputId = "s110",
+                               label = "primo seed :",
+                               min = 1,
+                               max = 100,
+                               value = 2,
+                               step=1),
+                   sliderInput(inputId = "s210",
+                               label = "secondo seed :",
+                               min = 1,
+                               max = 100,
+                               value = 5,
+                               step=1),
+                   sliderInput(inputId = "media10",
+                               label = "media :",
+                               min = 0,
+                               max = 100,
+                               value = 3,
+                               step=0.5),
+                   sliderInput(inputId = "alpha10",
+                               label = "alpha :",
+                               min = 0,
+                               max = 100,
+                               value = 2,
+                               step=0.5),
+                   
+                   sliderInput(inputId = "varianza10",
+                               label = "varianza :",
+                               min = 0,
+                               max = 100,
+                               value = 2,
+                               step=0.5),
+                   sliderInput(inputId = "lambda10",
+                               label = "parametro lambda :",
+                               min = 0,
+                               max = 10,
+                               value = 3,
+                               step=0.05),
+                   
+                   
+                   
+                   
+                   
+                   
+                   hr("Media"),
+                   fluidRow(column(12, verbatimTextOutput("media10"))),
+                   
+                   hr("Varianza"),
+                   fluidRow(column(12, verbatimTextOutput("varianza10")))
+                   
+                   
+                   
+                 ),
+                 
+                 
+                 
+                 
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   p("La distribuzione binomiale negativa si può ottenere come mistura di poisson con misturante gamma "),
+                   withMathJax("$$F_{X}(x)\\sim \\phi (h(\\frac{x-\\mu_{X}}{\\sigma_{X}}))$$"),
+                   withMathJax("$$h(t)=c_{1}+c_{2}(t+c_{3})^{1/3}$$ "),
+                   withMathJax("$$c_{1}=\\frac{1}{6}\\gamma_{X}-\\frac{6}{\\gamma_{X}}, \\; \\; c_{2}=3(\\frac{2}{\\gamma_{X}})^{2/3} , \\; \\;c_{3}=\\frac{2}{\\gamma_{X}}$$"),
+                   
+                   
+                   
+                   # Output: Histogram ----
+                   plotOutput(outputId = "distplot10"),
+                 )
+               )
+               
+               
+               
+               
+               
+      ),         
+      #parte 11 ul con normal power         
+      
+      
+      tabPanel("Simulazione con N.P",
+               titlePanel("Metodo Basato sull'approssimazione di Normal power"),
+               sidebarLayout(
+                 sidebarPanel(
+                   
+                   # Sidebar layout with input and output definitions ----
+                   selectInput("plotType11", "Plot Type",
+                               c(ecdf = "ecdf11",istogramma="barplot11")
+                   ),
+                   
+                   
+                   
+                   sliderInput(inputId = "bins11",
+                               label = "Numero di osservazioni:",
+                               min = 30,
+                               max = 10000,
+                               value = 100,
+                               step=5),
+                   
+                   sliderInput(inputId = "s111",
+                               label = "primo seed :",
+                               min = 1,
+                               max = 100,
+                               value = 2,
+                               step=1),
+                   sliderInput(inputId = "s211",
+                               label = "secondo seed :",
+                               min = 1,
+                               max = 100,
+                               value = 5,
+                               step=1),
+                   sliderInput(inputId = "media11",
+                               label = "media :",
+                               min = 0,
+                               max = 100,
+                               value = 3,
+                               step=0.1),
+                   sliderInput(inputId = "alpha11",
+                               label = "alpha :",
+                               min = 0,
+                               max = 100,
+                               value = 2,
+                               step=0.5),
+                   
+                   sliderInput(inputId = "varianza11",
+                               label = "varianza :",
+                               min = 0,
+                               max = 50,
+                               value = 2,
+                               step=0.1),
+                   sliderInput(inputId = "lambda11",
+                               label = "parametro lambda :",
+                               min = 0,
+                               max = 10,
+                               value = 3,
+                               step=0.1),
+                   
+                   
+                   
+                   
+                   
+                   
+                   hr("Media"),
+                   fluidRow(column(12, verbatimTextOutput("media11"))),
+                   
+                   hr("Varianza"),
+                   fluidRow(column(12, verbatimTextOutput("varianza11")))
+                   
+                   
+                   
+                 ),
+                 
+                 
+                 
+                 
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   withMathJax("$$F_{X}(x)\\sim \\phi(-\\frac{3}{\\gamma_{X}}+\\sqrt{\\frac{9}{\\gamma_{X}^{2}}+1 + \\frac{6}{\\gamma_{X}}\\frac{x-\\mu_{X}}{\\sigma_{X}}}) $$"),
+                   
+                   
+                   # Output: Histogram ----
+                   plotOutput(outputId = "distplot11"),
+                 )
+               )
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+      ),
+      
+      #parte 12 probabilit? di rovina
+      tabPanel("probabilità di rovina",
+               titlePanel("Probabilità di rovina"),
+               sidebarLayout(
+                 sidebarPanel(
+                   
+                   # Sidebar layout with input and output definitions ----
+                   
+                   sliderInput(inputId = "bins12",
+                               label = "Numero di osservazioni:",
+                               min = 30,
+                               max = 10000,
+                               value = 100,
+                               step=5),
+                   sliderInput(inputId = "R12",
+                               label = "Capitale iniziale:",
+                               min = 30,
+                               max = 10000,
+                               value = 40,
+                               step=5),
+                   
+                   sliderInput(inputId = "tau12",
+                               label = "tempo :",
+                               min = 0,
+                               max = 100,
+                               value = 3,
+                               step=0.1),
+                   sliderInput(inputId = "lambda12",
+                               label = "parametro lambda :",
+                               min = 0,
+                               max = 10,
+                               value = 3,
+                               step=0.1),
+                   sliderInput(inputId = "media12",
+                               label = "media :",
+                               min = 0,
+                               max = 100,
+                               value = 2,
+                               step=0.1),
+                   sliderInput(inputId = "varianza12",
+                               label = "varianza :",
+                               min = 0,
+                               max = 10,
+                               value = 3,
+                               step=0.1),
+                   sliderInput(inputId = "c12",
+                               label = "caricamento di sicurezza :",
+                               min = 0,
+                               max = 10,
+                               value = 0.5,
+                               step=0.1),
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                   
+                 ),
+                 
+                 
+                 
+                 
+                 
+                 # Main panel for displaying outputs ----
+                 mainPanel(
+                   
+                   hr("rovina1"),
+                   fluidRow(column(12, verbatimTextOutput("rovina1"))),
+                   
+                   hr("rovina2"),
+                   fluidRow(column(12, verbatimTextOutput("rovina2")))
+                   
+                   
+                 )
+               )
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+      ),
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    )
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  )
+  
+  
+  
+  
+  # Define server logic required to draw a histogram ----
+  server <- function(input, output) {
+    
+    
+    
+    #parte 1
+    
+    
+    
+    output$plot <- renderPlot({
+      
+      
+      
+      if (input$plotType =="ecdf") {
+        x <- runif(input$bins,0,1)
+        plot(ecdf(x))}
+      
+      
+      if (input$plotType =="density") {
+        x <- runif(input$bins,0,1)
+        plot(density(x))}
+      
+      if (input$plotType =="qqnorm") {
+        x <- runif(input$bins,0,1)
+        qqnorm(x)}
+      
+    })
+    
+    
+    
+    output$varianza <- renderPrint({
+      x <- runif(input$bins,0,1)
+      var(x)})
+    
+    output$media <- renderPrint({
+      x <- runif(input$bins,0,1)
+      mean(x)})
+    
+    
+    
+    #parte 2
+    
+    
+    
+    output$distPlot <- renderPlot({
+      
+      
+      
+      x = runif(input$bins1,0,1)
+      y = runif(input$bins1,0,1)
+      
+      
+      w1 <- function(x,y) {
+        sqrt(-2*log(x))*cos(2*pi*(y))
+      }
+      
+      w2 <- function(x,y) {
+        sqrt(-2*log(x))*sin(2*pi*(y))
+      }
+      
+      trasw1 = w1(x,y)
+      trasw2 = w2(x,y)
+      
+      untras = c(trasw1,trasw2)
+      
+      trasformazione  <- function(x,media,varianza) {
+        varianza*x + media
+      }
+      
+      simw1 = trasformazione(untras,input$media,input$varianza)
+      
+      
+      
+      
+      if (input$plotType1 =="ecdf1") {
+        plot(ecdf(simw1))
+      }
+      
+      
+      if (input$plotType1 =="density1") {
+        plot(density(simw1))}
+      
+      
+    })
+    
+    output$media1 <- renderPrint({
+      
+      x = runif(input$bins1,0,1)
+      y = runif(input$bins1,0,1)
+      
+      
+      w1 <- function(x,y) {
+        sqrt(-2*log(x))*cos(2*pi*(y))
+      }
+      
+      w2 <- function(x,y) {
+        sqrt(-2*log(x))*sin(2*pi*(y))
+      }
+      
+      trasw1 = w1(x,y)
+      trasw2 = w2(x,y)
+      
+      untras = c(trasw1,trasw2)
+      
+      trasformazione  <- function(x,media,varianza) {
+        varianza*x + media
+      }
+      
+      simw1 = trasformazione(untras,input$media,input$varianza)
+      
+      mean(simw1)})
+    
+    output$varianza1 <- renderPrint({
+      x = runif(input$bins1,0,1)
+      y = runif(input$bins1,0,1)
+      
+      
+      w1 <- function(x,y) {
+        sqrt(-2*log(x))*cos(2*pi*(y))
+      }
+      
+      w2 <- function(x,y) {
+        sqrt(-2*log(x))*sin(2*pi*(y))
+      }
+      
+      trasw1 = w1(x,y)
+      trasw2 = w2(x,y)
+      
+      untras = c(trasw1,trasw2)
+      
+      trasformazione  <- function(x,media,varianza) {
+        varianza*x + media
+      }
+      
+      simw1 = trasformazione(untras,input$media,input$varianza)
+      var(simw1)})
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    # parte 3
+    
+    output$distplot2 <- renderPlot({
+      
+      
+      
+      x = runif(input$bins2,0,1)
+      y = runif(input$bins2,0,1)
+      
+      
+      w1 <- function(x,y) {
+        sqrt(-2*log(x))*cos(2*pi*(y))
+      }
+      
+      w2 <- function(x,y) {
+        sqrt(-2*log(x))*sin(2*pi*(y))
+      }
+      
+      trasw1 = w1(x,y)
+      trasw2 = w2(x,y)
+      
+      untras = c(trasw1,trasw2)
+      
+      trasformazione  <- function(x,media,varianza) {
+        varianza*x + media
+      }
+      
+      simw1 = trasformazione(untras,input$media2,input$varianza2)
+      
+      trans=exp(simw1)
+      
+      
+      
+      if (input$plotType2 =="ecdf2") {
+        plot(ecdf(trans))
+      }
+      
+      if (input$plotType2 =="density2") {
+        plot(density(trans))}
+      
+      if (input$plotType2 =="qlnorm") {
+        plot(qlnorm(seq(0,1,0.05),7.899471,1),quantile(trans,probs = seq(0,1,0.05),type=1))
+        curve(1*x,add=TRUE,col=2) 
+      }
+      
+      
+    })
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    output$media2 <- renderPrint({
+      
+      x = runif(input$bins2,0,1)
+      y = runif(input$bins2,0,1)
+      
+      
+      w1 <- function(x,y) {
+        sqrt(-2*log(x))*cos(2*pi*(y))
+      }
+      
+      w2 <- function(x,y) {
+        sqrt(-2*log(x))*sin(2*pi*(y))
+      }
+      
+      trasw1 = w1(x,y)
+      trasw2 = w2(x,y)
+      
+      untras = c(trasw1,trasw2)
+      
+      trasformazione  <- function(x,media,varianza) {
+        varianza*x + media
+      }
+      
+      simw1 = trasformazione(untras,input$media2,input$varianza2)
+      
+      trasf <- exp(simw1)
+      
+      mean(trasf)})
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    output$varianza2 <- renderPrint({
+      x = runif(input$bins2,0,1)
+      y = runif(input$bins2,0,1)
+      
+      
+      w1 <- function(x,y) {
+        sqrt(-2*log(x))*cos(2*pi*(y))
+      }
+      
+      w2 <- function(x,y) {
+        sqrt(-2*log(x))*sin(2*pi*(y))
+      }
+      
+      trasw1 = w1(x,y)
+      trasw2 = w2(x,y)
+      
+      untras = c(trasw1,trasw2)
+      
+      trasformazione  <- function(x,media,varianza) {
+        varianza*x + media
+      }
+      
+      simw1 = trasformazione(untras,input$media2,input$varianza2)
+      
+      trasf <- exp(simw1)
+      
+      var(trasf)})
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    output$quantili <- renderPrint({
+      x = runif(input$bins2,0,1)
+      y = runif(input$bins2,0,1)
+      
+      
+      w1 <- function(x,y) {
+        sqrt(-2*log(x))*cos(2*pi*(y))
+      }
+      
+      w2 <- function(x,y) {
+        sqrt(-2*log(x))*sin(2*pi*(y))
+      }
+      
+      trasw1 = w1(x,y)
+      trasw2 = w2(x,y)
+      
+      untras = c(trasw1,trasw2)
+      
+      trasformazione  <- function(x,media,varianza) {
+        varianza*x + media
+      }
+      
+      
+      simw1 = trasformazione(untras,input$media2,input$varianza2)
+      
+      trasf <- exp(simw1)
+      
+      quantile(trasf)})
+    
+    #parte 4
+    
+    output$distplot4 <- renderPlot({
+      
+      
+      #funzione inversa della distr. exp
+      
+      fun.inv <- function(x,ro) {-(1/ro)*log(1-x)
+      }
+      
+      #abbiamo calcolato che se U ha distr unif anche U-1 ha distr unif
+      
+      fun.inv1 <- function(x,ro) {-(1/ro)*log(x)
+      }
+      
+      
+      # per vedere come varia il tutto al variare del numero degli 
+      #elemeti simulati prendiamo un capione con 100 elementi e uno con 10000
+      
+      sim_exp=runif(input$bins4,0,1)
+      
+      
+      
+      #andiamo a simulare per numeri diversi di elementi e prendiamo come valore ro a piacere
+      
+      
+      val.sim_exp = fun.inv1(sim_exp,input$rho) 
+      
+      
+      if (input$plotType4 =="ecdf4") {
+        plot(ecdf(val.sim_exp))
+      }
+      
+      
+      
+      if (input$plotType4 =="density4") {
+        plot(density(val.sim_exp))
+      }
+      
+      if (input$plotType4 =="hist4") {
+        plot(hist(val.sim_exp,prob=T,breaks=35))
+        
+        
+      }
+      
+      
+      
+      
+      
+      
+    })
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    output$media4 <- renderPrint({
+      
+      #abbiamo calcolato che se U ha distr unif anche U-1 ha distr unif
+      
+      fun.inv1 <- function(x,ro) {-(1/ro)*log(x)
+      }
+      
+      
+      # per vedere come varia il tutto al variare del numero degli 
+      #elemeti simulati prendiamo un capione n elementi a scelta
+      
+      
+      sim_exp=runif(input$bins4,0,1)
+      
+      
+      #andiamo a simulare per numeri diversi di elementi e prendiamo come valore ro 2
+      
+      
+      
+      val.sim_exp = fun.inv1(sim_exp,input$rho) 
+      
+      
+      mean(val.sim_exp)})
+    
+    
+    
+    
+    output$varianza4 <- renderPrint({
+      #abbiamo calcolato che se U ha distr unif anche U-1 ha distr unif
+      
+      
+      fun.inv1 <- function(x,ro) {-(1/ro)*log(x)
+      }
+      
+      # per vedere come varia il tutto al variare del numero degli 
+      #elemeti simulati prendiamo un capione con 100 elementi e uno con 10000
+      
+      
+      sim_exp=runif(input$bins4,0,1)
+      
+      
+      #andiamo a simulare per numeri diversi di elementi e prendiamo come valore ro 2
+      
+      
+      
+      val.sim_exp = fun.inv1(sim_exp,input$rho) 
+      
+      
+      var(val.sim_exp)})
+    
+    
+    
+    #Parte 5
+    
+    output$distplot5 <- renderPlot({
+      
+      
+      #funzione inversa della distr. exp
+      
+      fun.inv <- function(x,ro) {-(1/ro)*log(1-x)
+      }
+      
+      #abbiamo calcolato che se U ha distr unif anche U-1 ha distr unif
+      
+      fun.inv1 <- function(x,ro) {-(1/ro)*log(x)
+      }
+      
+      
+      # per vedere come varia il tutto al variare del numero degli 
+      #elemeti simulati prendiamo un capione con 100 elementi e uno con 10000
+      
+      sim_exp=runif(input$bins5,0,1)
+      
+      
+      
+      #andiamo a simulare per numeri diversi di elementi e prendiamo come valore ro 2
+      
+      
+      val.sim_exp = fun.inv1(sim_exp,input$rho) 
+      
+      
+      
+      sim5=runif(input$alpha5,0,1)
+      
+      #per ottenere una simulazione di una gamma (5,ro) e prendendo come ro 2
+      #andremo a calcolare che la simulazione di un valore della gamma ? una somma 
+      #delle funzioni  di ripartizioni inverse della espopnenziale
+      
+      simul.gamma <- function(x,ro) {sum(fun.inv(x,ro))}
+      
+      simul.gamma(sim5,input$rho5)
+      
+      #nella prossima funzione
+      # ro = parametro della poisson
+      # n = numero delle simulazioni
+      # i =parametro di struttura della gamma
+      
+      
+      
+      
+      #funziona ma mi da come numeri NULL
+      
+      
+      sim.gamma1 <- function(n,y,ro) {
+        vett = NULL
+        for(i in seq(from = 1, to = n, by = 1))
+          vett = c(vett, sum((-1/ro)*log(runif(y,0,1))))
+        vett
+      }
+      
+      
+      simulazione1=sim.gamma1(input$bins5,input$alpha5,input$rho5)
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      if (input$plotType5 =="ecdf5") {
+        plot(ecdf(simulazione1))
+        
+      }
+      
+      
+      
+      if (input$plotType5 =="density5") {
+        plot(density(simulazione1))
+      }
+      
+      
+      if (input$plotType5 =="hist5") {
+        plot(hist(simulazione1))
+      }
+      
+      
+      
+    })
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    output$media5 <- renderPrint({
+      
+      #abbiamo calcolato che se U ha distr unif anche U-1 ha distr unif
+      fun.inv <- function(x,ro) {-(1/ro)*log(1-x)
+      }
+      
+      fun.inv1 <- function(x,ro) {-(1/ro)*log(x)
+      }
+      
+      
+      # per vedere come varia il tutto al variare del numero degli 
+      #elemeti simulati prendiamo un capione con 100 elementi e uno con 10000
+      
+      sim_exp=runif(input$bins5,0,1)
+      
+      
+      
+      #andiamo a simulare per numeri diversi di elementi e prendiamo come valore ro 2
+      
+      
+      val.sim_exp = fun.inv1(sim_exp,input$rho5) 
+      
+      
+      
+      sim5=runif(input$alpha5,0,1)
+      
+      #per ottenere una simulazione di una gamma (5,ro) e prendendo come ro 2
+      #andremo a calcolare che la simulazione di un valore della gamma ? una somma 
+      #delle funzioni  di ripartizioni inverse della espopnenziale
+      
+      simul.gamma <- function(x,ro) {sum(fun.inv(x,ro))}
+      
+      simul.gamma(sim5,input$rho5)
+      
+      #nella prossima funzione
+      # ro = parametro della poisson
+      # n = numero delle simulazioni
+      # i =parametro di struttura della gamma
+      
+      
+      
+      
+      #funziona ma mi da come numeri NULL
+      
+      
+      sim.gamma1 <- function(n,y,ro) {
+        vett = NULL
+        for(i in seq(from = 1, to = n, by = 1))
+          vett = c(vett, sum((-1/ro)*log(runif(y,0,1))))
+        vett
+      }
+      
+      simulazione1=sim.gamma1(input$bins5,input$alpha5,input$rho5)
+      
+      
+      
+      mean(simulazione1)
+    })
+    
+    
+    
+    
+    output$varianza5 <- renderPrint({
+      #abbiamo calcolato che se U ha distr unif anche U-1 ha distr unif
+      
+      fun.inv <- function(x,ro) {-(1/ro)*log(1-x)
+      }
+      
+      
+      fun.inv1 <- function(x,ro) {-(1/ro)*log(x)
+      }
+      
+      
+      # per vedere come varia il tutto al variare del numero degli 
+      #elemeti simulati prendiamo un capione con 100 elementi e uno con 10000
+      
+      sim_exp=runif(input$bins5,0,1)
+      
+      
+      
+      #andiamo a simulare per numeri diversi di elementi e prendiamo come valore ro 2
+      
+      
+      val.sim_exp = fun.inv1(sim_exp,input$rho5) 
+      
+      
+      
+      sim5=runif(input$alpha5,0,1)
+      
+      #per ottenere una simulazione di una gamma (5,ro) e prendendo come ro 2
+      #andremo a calcolare che la simulazione di un valore della gamma ? una somma 
+      #delle funzioni  di ripartizioni inverse della espopnenziale
+      
+      simul.gamma <- function(x,ro) {sum(fun.inv(x,ro))}
+      
+      simul.gamma(sim5,input$rho5)
+      
+      #nella prossima funzione
+      # ro = parametro della poisson
+      # n = numero delle simulazioni
+      # i =parametro di struttura della gamma
+      
+      
+      
+      
+      #funziona ma mi da come numeri NULL
+      
+      
+      sim.gamma1 <- function(n,y,ro) {
+        vett = NULL
+        for(i in seq(from = 1, to = n, by = 1))
+          vett = c(vett, sum((-1/ro)*log(runif(y,0,1))))
+        vett
+        
+      }
+      
+      simulazione1=sim.gamma1(input$bins5,input$alpha5,input$rho5) 
+      
+      var(simulazione1)
+      
+    })
+    
+    
+    #simulazione della gamma alpha alpha parte 6
+    
+    output$distplot6 <- renderPlot({
+      
+      
+      #funzione inversa della distr. exp
+      
+      
+      simGamma.alpha<-rgamma(input$bins6,input$alpha6,input$alpha6)
+      
+      
+      
+      if (input$plotType6 =="ecdf6") {
+        plot(ecdf(simGamma.alpha))
+      }
+      
+      
+      
+      if (input$plotType6 =="density6") {
+        plot(density(simGamma.alpha))
+      }
+      
+      
+      if (input$plotType6 =="hist6") {
+        plot(hist(simGamma.alpha))
+      }
+      
+    })
+    
+    
+    
+    
+    
+    
+    
+    output$varianza6 <- renderPrint({
+      simGamma.alpha<-rgamma(input$bins6,input$alpha6,input$alpha6)
+      
+      var(simGamma.alpha)
+      
+    })
+    
+    
+    
+    
+    
+    
+    output$media6 <- renderPrint({
+      
+      
+      simGamma.alpha<-rgamma(input$bins6,input$alpha6,input$alpha6)
+      
+      mean(simGamma.alpha)
+      
+    })
+    
+    #qui inserisco la parte server della simulazione di poisson
+    
+    output$distplot7 <- renderPlot({
+      
+      
+      
+      
+      sim.poiss <- function(m, l){
+        
+        k=100000
+        
+        simPois <- c(rep(0,m))
+        
+        for(i in 1:m){
+          n=-1
+          a=1
+          N=NULL
+          for(j in 1:k){
+            n=n+1
+            b=a
+            a=a*runif(1)
+            if(exp(-l)>a&&exp(-l)<=b){
+              N=n
+              break
+            }
+          }
+          simPois[i] <- N
+        }
+        
+        data=print(simPois)
+        
+      }
+      
+      
+      simulazione=sim.poiss(input$bins7, input$lambda7)
+      
+      
+      
+      
+      
+      
+      if (input$plotType7 =="ecdf7") {
+        plot(ecdf(simulazione),ylim=c(0,1))
+      }
+      
+      
+    })
+    
+    
+    
+    
+    
+    
+    output$varianza7 <- renderPrint({
+      
+      
+      
+      sim.poiss <- function(m, l){
+        
+        k=100000
+        
+        simPois <- c(rep(0,m))
+        
+        for(i in 1:m){
+          n=-1
+          a=1
+          N=NULL
+          for(j in 1:k){
+            n=n+1
+            b=a
+            a=a*runif(1)
+            if(exp(-l)>a&&exp(-l)<=b){
+              N=n
+              break
+            }
+          }
+          simPois[i] <- N
+        }
+        
+        simPois
+        
+      }
+      
+      simulazione<-sim.poiss(input$bins7, input$lambda7)
+      
+      var(simulazione)
+      
+    })
+    
+    
+    
+    
+    
+    
+    output$media7 <- renderPrint({
+      
+      
+      sim.poiss <- function(m, l){
+        
+        k=100000
+        
+        simPois <- c(rep(0,m))
+        
+        
+        for(i in 1:m){
+          n=-1
+          a=1
+          N=NULL
+          for(j in 1:k){
+            n=n+1
+            b=a
+            a=a*runif(1)
+            if(exp(-l)>a&&exp(-l)<=b){
+              N=n
+              break
+            }
+          }
+          simPois[i] <- N
+        }
+        
+        simPois
+        
+        
+        
+      }
+      
+      simulazione <-sim.poiss(input$bins7, input$lambda7)
+      
+      
+      mean(simulazione)
+      
+      
+    })
+    
+    # sezione servere della parte 8 che rappresenta la simulazione della binomiale negativa
+    
+    
+    output$distplot8 <- renderPlot({
+      
+      
+      
+      
+      sim.bin <- function(m, l, alpha){
+        
+        k=100000
+        
+        p=alpha/(alpha+l)
+        
+        simNBin <- c(rep(0,m))
+        
+        for(i in 1:m){
+          theta=rgamma(1,alpha,alpha)
+          n=-1
+          a=1
+          N=NULL
+          for(j in 1:k){
+            n=n+1
+            b=a
+            a=a*runif(1)
+            if(exp(-l*theta)>a&&exp(-l*theta)<=b){
+              N=n
+              break
+            }
+          }
+          simNBin[i] <- N
+        }
+        
+        data=print(simNBin)
+        
+      }
+      
+      
+      simulazione=sim.bin(input$bins8, input$lambda8, input$alpha8)
+      
+      p=input$alpha8/(input$alpha8 + input$lambda8)
+      
+      normale=rnbinom(input$bins8,input$alpha8,p)
+      
+      
+      
+      if (input$plotType8 =="ecdf8") {
+        plot(ecdf(simulazione))
+        curve(pnbinom(x,input$alpha8,p), col="red", add=T)}
+      
+      
+      
+      if (input$plotType8 =="barplot8") {
+        par(mfrow=c(1,2))
+        barplot(table(simulazione)/input$bins8)
+        barplot(table(normale)/input$bins8, col="lightblue")}
+      
+      
+    })
+    
+    
+    
+    
+    
+    
+    
+    output$varianza8 <- renderPrint({
+      
+      
+      
+      sim.bin <- function(m, l, alpha){
+        
+        k=100000
+        
+        simNBin <- c(rep(0,m))
+        
+        for(i in 1:m){
+          theta=rgamma(1,alpha,alpha)
+          n=-1
+          a=1
+          N=NULL
+          for(j in 1:k){
+            n=n+1
+            b=a
+            a=a*runif(1)
+            if(exp(-l*theta)>a&&exp(-l*theta)<=b){
+              N=n
+              break
+            }
+          }
+          simNBin[i] <- N
+        }
+        
+        simNBin
+        
+      }
+      
+      
+      simulazione=sim.bin(input$bins8, input$lambda8,input$alpha8)
+      
+      var(simulazione)
+      
+    })
+    
+    
+    
+    
+    
+    
+    output$media8 <- renderPrint({
+      
+      
+      
+      sim.bin <- function(m, l, alpha){
+        
+        k=100000
+        
+        simNBin <- c(rep(0,m))
+        
+        for(i in 1:m){
+          theta=rgamma(1,alpha,alpha)
+          n=-1
+          a=1
+          N=NULL
+          for(j in 1:k){
+            n=n+1
+            b=a
+            a=a*runif(1)
+            if(exp(-l*theta)>a&&exp(-l*theta)<=b){
+              N=n
+              break
+            }
+          }
+          simNBin[i] <- N
+        }
+        
+        simNBin
+        
+      }
+      simulazione=sim.bin(input$bins8, input$lambda8,input$alpha8)
+      mean(simulazione)
+    }
+    )
+    
+    #parte 9 sul server von poisson composta
+    
+    output$distplot9 <- renderPlot({
+      
+      
+      
+      
+      poiss.com<-function(m,s1,s2,mu,sigma,lambda){
+        u1<-function(m,s1){
+          set.seed(s1)
+          runif(m)
+        }
+        u2<-function(m,s2){
+          set.seed(s2)
+          runif(m)
+        }
+        
+        
+        w1<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*cos(2*pi*(u2(m,s2)))
+        }
+        w2<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*sin(2*pi*(u2(m,s2)))
+        }
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        W2<-w2(u1,u2,m,s1,s2)
+        unione<-c(c(w1(u1,u2,m,s1,s2)[sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2))/2)],
+                    w2(u1,u2,m,s1,s2)[sample(1:length(w2(u1,u2,m,s1,s2)),length(w2(u1,u2,m,s1,s2))/2)])
+                  [sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2)))])
+        
+        w1.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        w2.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        
+        y1<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w1.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        y2<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w2.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        
+        
+        
+        k=100000
+        
+        simPois <- c(rep(0,m))
+        
+        for(i in 1:m){
+          n=-1
+          a=1
+          N=NULL
+          for(j in 1:k){
+            n=n+1
+            b=a
+            a=a*runif(1)
+            if(exp(-lambda)>a&&exp(-lambda)<=b){
+              N=n
+              break
+            }
+          }
+          simPois[i] <- N
+        }
+        
+        
+        
+        
+        
+        Y1<-y1(u1,u2,m,s1,s2,mu,sigma)
+        simCompPois<-c(rep(0,m))
+        
+        
+        # simuli i valori secondo le ipotesi del modello composto
+        for (i in 1:m) {
+          n=simPois[sample(1:length(simPois),1)]
+          if(n==0){
+            simCompPois[i]=n 
+            next}
+          simCompPois[i]=sum(Y1[sample(1:length(Y1),n)])
+        }
+        
+        simCompPois
+      }
+      
+      simulazione<-poiss.com(input$bins9,input$s19,input$s29,input$media9,input$varianza9, input$lambda9)
+      
+      
+      
+      
+      
+      
+      if (input$plotType9 =="ecdf9") {
+        plot(ecdf(simulazione))
+      }
+      
+      if (input$plotType9 =="barplot9") {
+        par(mfrow=c(1,2))
+        hist(simulazione,prob=T,breaks=25,xlim=c(0,10000))
+        hist(rpois(input$bins9,input$lambda9)*rlnorm(input$bins9,input$media9,input$varianza9),prob=T,breaks=25,xlim=c(0,10000), col="lightblue")
+        
+        
+      }
+      
+      
+      
+      
+    }
+    )
+    
+    
+    
+    
+    
+    
+    output$varianza9 <- renderPrint({
+      
+      
+      
+      poiss.com<-function(m,s1,s2,mu,sigma,lambda){
+        u1<-function(m,s1){
+          set.seed(s1)
+          runif(m)
+        }
+        u2<-function(m,s2){
+          set.seed(s2)
+          runif(m)
+        }
+        
+        
+        w1<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*cos(2*pi*(u2(m,s2)))
+        }
+        w2<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*sin(2*pi*(u2(m,s2)))
+        }
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        W2<-w2(u1,u2,m,s1,s2)
+        unione<-c(c(w1(u1,u2,m,s1,s2)[sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2))/2)],
+                    w2(u1,u2,m,s1,s2)[sample(1:length(w2(u1,u2,m,s1,s2)),length(w2(u1,u2,m,s1,s2))/2)])
+                  [sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2)))])
+        
+        w1.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        w2.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        
+        y1<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w1.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        y2<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w2.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        
+        
+        
+        k=100000
+        
+        simPois <- c(rep(0,m))
+        
+        for(i in 1:m){
+          n=-1
+          a=1
+          N=NULL
+          for(j in 1:k){
+            n=n+1
+            b=a
+            a=a*runif(1)
+            if(exp(-lambda)>a&&exp(-lambda)<=b){
+              N=n
+              break
+            }
+          }
+          simPois[i] <- N
+        }
+        
+        
+        
+        
+        
+        Y1<-y1(u1,u2,m,s1,s2,mu,sigma)
+        simCompPois<-c(rep(0,m))
+        
+        
+        # simuli i valori secondo le ipotesi del modello composto
+        for (i in 1:m) {
+          n=simPois[sample(1:length(simPois),1)]
+          if(n==0){
+            simCompPois[i]=n 
+            next}
+          simCompPois[i]=sum(Y1[sample(1:length(Y1),n)])
+        }
+        
+        simCompPois
+      }
+      
+      simulazione<-poiss.com(input$bins9,input$s19,input$s29,input$media9,input$varianza9, input$lambda9)
+      
+      var(simulazione)
+      
+    })
+    
+    
+    
+    
+    
+    
+    output$media9 <- renderPrint({
+      
+      
+      poiss.com<-function(m,s1,s2,mu,sigma,lambda){
+        u1<-function(m,s1){
+          set.seed(s1)
+          runif(m)
+        }
+        u2<-function(m,s2){
+          set.seed(s2)
+          runif(m)
+        }
+        
+        
+        w1<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*cos(2*pi*(u2(m,s2)))
+        }
+        w2<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*sin(2*pi*(u2(m,s2)))
+        }
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        W2<-w2(u1,u2,m,s1,s2)
+        unione<-c(c(w1(u1,u2,m,s1,s2)[sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2))/2)],
+                    w2(u1,u2,m,s1,s2)[sample(1:length(w2(u1,u2,m,s1,s2)),length(w2(u1,u2,m,s1,s2))/2)])
+                  [sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2)))])
+        
+        w1.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        w2.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        
+        y1<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w1.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        y2<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w2.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        
+        
+        
+        k=100000
+        
+        simPois <- c(rep(0,m))
+        
+        for(i in 1:m){
+          n=-1
+          a=1
+          N=NULL
+          for(j in 1:k){
+            n=n+1
+            b=a
+            a=a*runif(1)
+            if(exp(-lambda)>a&&exp(-lambda)<=b){
+              N=n
+              break
+            }
+          }
+          simPois[i] <- N
+        }
+        
+        
+        
+        
+        
+        Y1<-y1(u1,u2,m,s1,s2,mu,sigma)
+        simCompPois<-c(rep(0,m))
+        
+        
+        # simuli i valori secondo le ipotesi del modello composto
+        for (i in 1:m) {
+          n=simPois[sample(1:length(simPois),1)]
+          if(n==0){
+            simCompPois[i]=n 
+            next}
+          simCompPois[i]=sum(Y1[sample(1:length(Y1),n)])
+        }
+        
+        simCompPois
+      }
+      
+      simulazione<-poiss.com(input$bins9,input$s19,input$s29,input$media9,input$varianza9, input$lambda9)
+      
+      
+      mean(simulazione)
+      
+      
+    })
+    #parte d10 con la distribuzione WF
+    
+    output$distplot10 <- renderPlot({
+      
+      
+      
+      
+      W.F<-function(m,s1,s2,mu,sigma,lambda,alpha){
+        
+        require(moments)
+        
+        u1<-function(m,s1){
+          set.seed(s1)
+          runif(m)
+        }
+        u2<-function(m,s2){
+          set.seed(s2)
+          runif(m)
+        }
+        
+        
+        w1<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*cos(2*pi*(u2(m,s2)))
+        }
+        w2<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*sin(2*pi*(u2(m,s2)))
+        }
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        W2<-w2(u1,u2,m,s1,s2)
+        
+        unione<-c(c(w1(u1,u2,m,s1,s2)[sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2))/2)],
+                    w2(u1,u2,m,s1,s2)[sample(1:length(w2(u1,u2,m,s1,s2)),length(w2(u1,u2,m,s1,s2))/2)])
+                  [sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2)))])
+        
+        w1.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        w2.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        
+        y1<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w1.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        y2<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w2.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        
+        
+        
+        simCompPois_WH<-c(rep(0,m))
+        gammaAlpha.momento.primo<-alpha*alpha
+        gammaAlpha.varianza<-alpha*(alpha^2)
+        gammaAlpha.momento.secondo=gammaAlpha.varianza+(gammaAlpha.momento.primo^2)
+        v.a.teor.PoisComp<-lambda*gammaAlpha.momento.primo
+        var.teor.PoisComp<-sqrt(lambda*gammaAlpha.momento.secondo)
+        gammaAlpha.skewness=2/(sqrt(alpha))
+        gammaAlpha.momento.terzo=gammaAlpha.skewness*(gammaAlpha.momento.secondo^(3/2))
+        X.skewness=(gammaAlpha.momento.terzo)/(sqrt(lambda*((gammaAlpha.momento.secondo)^3
+        )))
+        X.skewness
+        
+        
+        
+        c1<-(X.skewness/6)-(6/X.skewness)
+        c2<-3*((2/X.skewness)^(2/3))
+        c3<-2/X.skewness
+        
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        
+        
+        for (i in 1:m) {
+          simCompPois_WH[i]<-((((W1[i]-c1)/c2)^3)/c3)*sqrt(var.teor.PoisComp)+v.a.teor.PoisComp
+        }
+        
+        simCompPois_WH
+        
+      }
+      
+      
+      
+      simulazione<-W.F(input$bins10,input$s110,input$s210,input$media10,input$varianza10, input$lambda10,input$alpha10)
+      
+      
+      
+      
+      
+      
+      if (input$plotType10 =="ecdf10") {
+        plot(ecdf(simulazione))
+      }
+      
+      if (input$plotType10 =="barplot10") {
+        hist(simulazione,prob=T,breaks=25)
+        
+        
+      }
+      
+      
+      
+      
+    }
+    )
+    
+    
+    
+    
+    
+    
+    output$varianza10 <- renderPrint({
+      
+      
+      
+      W.F<-function(m,s1,s2,mu,sigma,lambda,alpha){
+        
+        require(moments)
+        
+        u1<-function(m,s1){
+          set.seed(s1)
+          runif(m)
+        }
+        u2<-function(m,s2){
+          set.seed(s2)
+          runif(m)
+        }
+        
+        
+        w1<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*cos(2*pi*(u2(m,s2)))
+        }
+        w2<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*sin(2*pi*(u2(m,s2)))
+        }
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        W2<-w2(u1,u2,m,s1,s2)
+        
+        unione<-c(c(w1(u1,u2,m,s1,s2)[sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2))/2)],
+                    w2(u1,u2,m,s1,s2)[sample(1:length(w2(u1,u2,m,s1,s2)),length(w2(u1,u2,m,s1,s2))/2)])
+                  [sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2)))])
+        
+        w1.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        w2.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        
+        y1<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w1.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        y2<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w2.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        
+        
+        
+        simCompPois_WH<-c(rep(0,m))
+        gammaAlpha.momento.primo<-alpha*alpha
+        gammaAlpha.varianza<-alpha*(alpha^2)
+        gammaAlpha.momento.secondo=gammaAlpha.varianza+(gammaAlpha.momento.primo^2)
+        v.a.teor.PoisComp<-lambda*gammaAlpha.momento.primo
+        var.teor.PoisComp<-sqrt(lambda*gammaAlpha.momento.secondo)
+        gammaAlpha.skewness=2/(sqrt(alpha))
+        gammaAlpha.momento.terzo=gammaAlpha.skewness*(gammaAlpha.momento.secondo^(3/2))
+        X.skewness=(gammaAlpha.momento.terzo)/(sqrt(lambda*((gammaAlpha.momento.secondo)^3
+        )))
+        X.skewness
+        
+        
+        
+        c1<-(X.skewness/6)-(6/X.skewness)
+        c2<-3*((2/X.skewness)^(2/3))
+        c3<-2/X.skewness
+        
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        
+        
+        for (i in 1:m) {
+          simCompPois_WH[i]<-((((W1[i]-c1)/c2)^3)/c3)*sqrt(var.teor.PoisComp)+v.a.teor.PoisComp
+        }
+        
+        simCompPois_WH
+        
+      }
+      
+      simulazione<-W.F(input$bins10,input$s110,input$s210,input$media10,input$varianza10, input$lambda10, input$alpha10)
+      
+      var(simulazione)
+      
+    })
+    
+    
+    
+    
+    
+    
+    output$media10 <- renderPrint({
+      
+      
+      W.F<-function(m,s1,s2,mu,sigma,lambda,alpha){
+        
+        require(moments)
+        
+        u1<-function(m,s1){
+          set.seed(s1)
+          runif(m)
+        }
+        u2<-function(m,s2){
+          set.seed(s2)
+          runif(m)
+        }
+        
+        
+        w1<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*cos(2*pi*(u2(m,s2)))
+        }
+        w2<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*sin(2*pi*(u2(m,s2)))
+        }
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        W2<-w2(u1,u2,m,s1,s2)
+        
+        unione<-c(c(w1(u1,u2,m,s1,s2)[sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2))/2)],
+                    w2(u1,u2,m,s1,s2)[sample(1:length(w2(u1,u2,m,s1,s2)),length(w2(u1,u2,m,s1,s2))/2)])
+                  [sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2)))])
+        
+        w1.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        w2.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        
+        y1<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w1.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        y2<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w2.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        
+        
+        
+        simCompPois_WH<-c(rep(0,m))
+        gammaAlpha.momento.primo<-alpha*alpha
+        gammaAlpha.varianza<-alpha*(alpha^2)
+        gammaAlpha.momento.secondo=gammaAlpha.varianza+(gammaAlpha.momento.primo^2)
+        v.a.teor.PoisComp<-lambda*gammaAlpha.momento.primo
+        var.teor.PoisComp<-sqrt(lambda*gammaAlpha.momento.secondo)
+        gammaAlpha.skewness=2/(sqrt(alpha))
+        gammaAlpha.momento.terzo=gammaAlpha.skewness*(gammaAlpha.momento.secondo^(3/2))
+        X.skewness=(gammaAlpha.momento.terzo)/(sqrt(lambda*((gammaAlpha.momento.secondo)^3
+        )))
+        X.skewness
+        
+        
+        
+        c1<-(X.skewness/6)-(6/X.skewness)
+        c2<-3*((2/X.skewness)^(2/3))
+        c3<-2/X.skewness
+        
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        
+        
+        for (i in 1:m) {
+          simCompPois_WH[i]<-((((W1[i]-c1)/c2)^3)/c3)*sqrt(var.teor.PoisComp)+v.a.teor.PoisComp
+        }
+        
+        simCompPois_WH
+        
+      }
+      
+      simulazione<-W.F(input$bins10,input$s110,input$s210,input$media10,input$varianza10, input$lambda10,input$alpha10)
+      
+      
+      mean(simulazione)
+      
+      
+    })
+    
+    #parte 11 normal power
+    
+    output$distplot11 <- renderPlot({
+      
+      
+      
+      
+      W.F<-function(m,s1,s2,mu,sigma,lambda,alpha){
+        
+        require(moments)
+        
+        u1<-function(m,s1){
+          set.seed(s1)
+          runif(m)
+        }
+        u2<-function(m,s2){
+          set.seed(s2)
+          runif(m)
+        }
+        
+        
+        w1<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*cos(2*pi*(u2(m,s2)))
+        }
+        w2<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*sin(2*pi*(u2(m,s2)))
+        }
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        W2<-w2(u1,u2,m,s1,s2)
+        
+        unione<-c(c(w1(u1,u2,m,s1,s2)[sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2))/2)],
+                    w2(u1,u2,m,s1,s2)[sample(1:length(w2(u1,u2,m,s1,s2)),length(w2(u1,u2,m,s1,s2))/2)])
+                  [sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2)))])
+        
+        w1.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        w2.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        
+        y1<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w1.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        y2<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w2.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        
+        simCompPois_NP<-c(rep(0,m))
+        Y.momento.primo<-exp(mu+((sigma^2)/2))
+        Y.momento.secondo=exp(2*mu+(sigma^2))*(exp(sigma^2)-1)+((exp(mu+(sigma^2)/2))^2)
+        v.a.teor.PoisComp<-lambda*Y.momento.primo
+        var.teor.PoisComp<-sqrt(lambda*Y.momento.secondo)
+        Y.skewness=(exp(sigma^2)+2)*sqrt(exp(sigma^2)-1)
+        Y.momento.terzo=Y.skewness*(Y.momento.secondo^(3/2))
+        X.skewness=(Y.momento.terzo)/(sqrt(lambda*((Y.momento.secondo)^3)))
+        
+        X.skewness
+        
+        
+        
+        
+        c1<-(X.skewness/6)-(6/X.skewness)
+        c2<-3*((2/X.skewness)^(2/3))
+        c3<-2/X.skewness
+        
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        
+        
+        for (i in 1:m) {
+          simCompPois_NP[i]<-((((W1[i]-c1)/c2)^3)/c3)*sqrt(var.teor.PoisComp)+v.a.teor.PoisComp
+        }
+        
+        simCompPois_NP
+        
+      }
+      
+      
+      
+      simulazione<-W.F(input$bins11,input$s111,input$s211,input$media11,input$varianza11, input$lambda11,input$alpha11)
+      
+      
+      
+      
+      
+      
+      if (input$plotType11 =="ecdf11") {
+        plot(ecdf(simulazione))
+      }
+      
+      if (input$plotType11 =="barplot11") {
+        hist(simulazione,prob=T,breaks=25)
+        
+        
+      }
+      
+      
+      
+      
+    }
+    )
+    
+    
+    
+    
+    
+    
+    output$varianza11 <- renderPrint({
+      
+      
+      
+      W.F<-function(m,s1,s2,mu,sigma,lambda,alpha){
+        
+        require(moments)
+        
+        u1<-function(m,s1){
+          set.seed(s1)
+          runif(m)
+        }
+        u2<-function(m,s2){
+          set.seed(s2)
+          runif(m)
+        }
+        
+        
+        w1<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*cos(2*pi*(u2(m,s2)))
+        }
+        w2<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*sin(2*pi*(u2(m,s2)))
+        }
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        W2<-w2(u1,u2,m,s1,s2)
+        
+        unione<-c(c(w1(u1,u2,m,s1,s2)[sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2))/2)],
+                    w2(u1,u2,m,s1,s2)[sample(1:length(w2(u1,u2,m,s1,s2)),length(w2(u1,u2,m,s1,s2))/2)])
+                  [sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2)))])
+        
+        w1.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        w2.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        
+        y1<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w1.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        y2<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w2.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        
+        
+        simCompPois_NP<-c(rep(0,m))
+        Y.momento.primo<-exp(mu+((sigma^2)/2))
+        Y.momento.secondo=exp(2*mu+(sigma^2))*(exp(sigma^2)-1)+((exp(mu+(sigma^2)/2))^2)
+        v.a.teor.PoisComp<-lambda*Y.momento.primo
+        var.teor.PoisComp<-sqrt(lambda*Y.momento.secondo)
+        Y.skewness=(exp(sigma^2)+2)*sqrt(exp(sigma^2)-1)
+        Y.momento.terzo=Y.skewness*(Y.momento.secondo^(3/2))
+        X.skewness=(Y.momento.terzo)/(sqrt(lambda*((Y.momento.secondo)^3)))
+        X.skewness
+        
+        
+        
+        c1<-(X.skewness/6)-(6/X.skewness)
+        c2<-3*((2/X.skewness)^(2/3))
+        c3<-2/X.skewness
+        
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        
+        
+        for (i in 1:m) {
+          simCompPois_NP[i]<-((((W1[i]-c1)/c2)^3)/c3)*sqrt(var.teor.PoisComp)+v.a.teor.PoisComp
+        }
+        
+        simCompPois_NP
+        
+      }
+      
+      simulazione<-W.F(input$bins11,input$s111,input$s211,input$media11,input$varianza11, input$lambda11, input$alpha11)
+      
+      var(simulazione)
+      
+    })
+    
+    
+    
+    
+    
+    
+    output$media11 <- renderPrint({
+      
+      
+      W.F<-function(m,s1,s2,mu,sigma,lambda,alpha){
+        
+        require(moments)
+        
+        u1<-function(m,s1){
+          set.seed(s1)
+          runif(m)
+        }
+        u2<-function(m,s2){
+          set.seed(s2)
+          runif(m)
+        }
+        
+        
+        w1<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*cos(2*pi*(u2(m,s2)))
+        }
+        w2<-function(u1,u2,m,s1,s2){
+          sqrt(-2*log(u1(m,s1)))*sin(2*pi*(u2(m,s2)))
+        }
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        W2<-w2(u1,u2,m,s1,s2)
+        
+        unione<-c(c(w1(u1,u2,m,s1,s2)[sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2))/2)],
+                    w2(u1,u2,m,s1,s2)[sample(1:length(w2(u1,u2,m,s1,s2)),length(w2(u1,u2,m,s1,s2))/2)])
+                  [sample(1:length(w1(u1,u2,m,s1,s2)),length(w1(u1,u2,m,s1,s2)))])
+        
+        w1.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        w2.transformed<-function(u1,u2,m,s1,s2,mu,sigma){
+          w1(u1,u2,m,s1,s2)*sigma+mu
+        }
+        
+        y1<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w1.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        y2<-function(u1,u2,m,s1,s2,mu,sigma){
+          exp(w2.transformed(u1,u2,m,s1,s2,mu,sigma))
+        }
+        
+        
+        simCompPois_NP<-c(rep(0,m))
+        Y.momento.primo<-exp(mu+((sigma^2)/2))
+        Y.momento.secondo=exp(2*mu+(sigma^2))*(exp(sigma^2)-1)+((exp(mu+(sigma^2)/2))^2)
+        v.a.teor.PoisComp<-lambda*Y.momento.primo
+        var.teor.PoisComp<-sqrt(lambda*Y.momento.secondo)
+        Y.skewness=(exp(sigma^2)+2)*sqrt(exp(sigma^2)-1)
+        Y.momento.terzo=Y.skewness*(Y.momento.secondo^(3/2))
+        X.skewness=(Y.momento.terzo)/(sqrt(lambda*((Y.momento.secondo)^3)))
+        X.skewness
+        
+        
+        
+        c1<-(X.skewness/6)-(6/X.skewness)
+        c2<-3*((2/X.skewness)^(2/3))
+        c3<-2/X.skewness
+        
+        
+        W1<-w1(u1,u2,m,s1,s2)
+        
+        
+        for (i in 1:m) {
+          simCompPois_NP[i]<-((((W1[i]-c1)/c2)^3)/c3)*sqrt(var.teor.PoisComp)+v.a.teor.PoisComp
+        }
+        
+        simCompPois_NP
+        
+      }
+      
+      simulazione<-W.F(input$bins11,input$s111,input$s211,input$media11,input$varianza11, input$lambda11,input$alpha11)
+      
+      
+      mean(simulazione)
+      
+      
+    })
+    
+    #parte 12 probabilità di rovina
+    
+
+      
+      output$rovina1 <- renderText({
+        
+        
+        
+        simProbRovina_2<-function(m,R,c,tau,lambda,mu,sigma){
+          
+          simProcPois<-c(rep(NULL,m))
+          k=10000
+          for (i in 1:m) {
+            t=0
+            n=0
+            for (j in 1:k) {
+              t=t+(-(1/lambda)*log(runif(1)))
+              if(t>tau){
+                simProcPois[i]=n
+                break}
+              n=n+1
+            }
+          }
+          
+          
+          y2.unset<-function(m,mu,sigma){
+            exp((sqrt(-2*log(runif(m)))*sin(2*pi*(runif(m))))*sigma+mu)
+          }
+          
+          
+          rovina1=0
+          simExp=NULL
+          
+          for(i in 1:m){
+            t=0
+            d=0
+            simExp=(-(1/lambda)*log(runif(1)))
+            t=t+simExp
+            if(t>tau){next}
+            d=d+c*simExp-y2.unset(1,mu,sigma)
+            if(d<(-R)){
+              rovina1=rovina1+1
+              next}
+          }
+          rovina1
+          
+        }
+        paste(c('Probabilità di rovina = ',round(simProbRovina_2(input$bins12,input$R12,input$c12,input$tau12,input$lambda12,input$media12,input$varianza12)/input$bins12, digits = 2)*100,'%'))
+        
+        
+        
+      })
+      
+      
+      
+      output$rovina2 <- renderText({
+        
+        
+        simProbRovina_1<-function(m,R,c,tau,lambda,mu,sigma){
+          
+          y1.unset<-function(m,mu,sigma){
+            exp((sqrt(-2*log(runif(m)))*cos(2*pi*(runif(m))))*sigma+mu)
+          }
+          
+          
+          simProcPois<-c(rep(NULL,m))
+          
+          k=10000
+          
+          for (i in 1:m) {
+            t=0
+            n=0
+            for (j in 1:k) {
+              t=t+(-(1/lambda)*log(runif(1)))
+              if(t>tau){
+                simProcPois[i]=n
+                break}
+              n=n+1
+            }
+          }
+          
+          
+          
+          
+          
+          rovina2=0
+          simExp=NULL
+          
+          
+          for(i in 1:m){
+            t=0
+            d=0
+            simExp=(-(1/lambda)*log(runif(1)))
+            t=t+simExp
+            if(t>tau){next}
+            d=d+c*simExp-y1.unset(1,mu,sigma)
+            if(d<(-R)){
+              rovina2=rovina2+1
+              next}
+          }
+          rovina2
+        }
+        print(c('Probabilità di rovina = ',round(simProbRovina_1(input$bins12,input$R12,input$c12,input$tau12,input$lambda12,input$media12,input$varianza12)/input$bins12
+                , digits = 2)*100,'%'))
+        
+        
+        
+      })
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  }
+  
+  
+  
+  
+  
+  # Create Shiny app ----
+  shinyApp(ui = ui, server = server)
+}
