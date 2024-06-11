@@ -1,0 +1,42 @@
+S01 = 10
+S02 = 15
+mu1 = 0.05
+mu2 = 0.04
+sigma1 = 0.3
+sigma2 = 0.4
+endT = 5
+deltaT = 1
+time_seq = seq(0,endT,deltaT)
+m = 10^3
+
+muT1 = (mu1-0.5*sigma1^2)*deltaT
+muT2 = (mu2-0.5*sigma2^2)*deltaT
+
+siT1 = sigma1*sqrt(deltaT)
+siT2 = sigma2*sqrt(deltaT)
+
+rho= 0.4
+
+St1 = matrix(NA,ncol = length(time_seq),nrow = m)
+St1[,1]=rep(S01,m)
+
+St2 = matrix(NA,ncol = length(time_seq),nrow = m)
+St2[,1]=rep(S02,m)
+
+
+set.seed(10042013)
+
+
+for (i in (1:(length(time_seq)-1))) {
+  St1[,i+1]= St1[,i]*exp(muT1+siT1*rnorm(m))
+  St2[,i+1]= St2[,i]*exp(muT2+siT2*(rho*rnorm(m)+sqrt(1-rho^2)*rnorm(m)))
+                         }
+
+
+
+plot(St[1,], xlim = c(0,6),ylim = c(0,200),type='l')
+for (i in (1:m)){
+  lines(type='l',St2[i,]+St1[i,], xlim = c(0,6),ylim = c(0,200),col=i)
+}
+
+
