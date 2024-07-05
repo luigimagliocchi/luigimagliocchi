@@ -1,0 +1,1597 @@
+---
+title: "Progetto Mortalità"
+format: html
+toc: true
+toc-location: left
+toc-title: Indice
+editor: visual
+---
+
+## Dati
+
+```{r}
+#| echo: false
+#| 
+library(demography)
+
+UK <- hmd.mx(country = 'GBR_NP',
+             username = 'luigimagliocchi@gmail.com',
+             password = '30Settembre1995!',
+             label = 'England and Wales')
+
+save(UK, file = "HMD-UK-Mortality.RData")
+
+load("HMD-UK-Mortality.RData")
+```
+
+Per i dati sulla mortalità ho scelto Inghilterra e Galles. L'ogetto UK contiene i dati riguardanti i tassi di mortalità e gli esposti centrali al rischio per gli anni di calendario che vanno dal 1922 al 2021 con le età compresa tra 0 a 110 anni.
+
+## (1) Analisi Esplorative
+
+### Mortality Rates
+
+Ciò che può essere da subito messo in evidnza è l'andamento della mortalità rispetto all'età per uomini, donne e rispetto al totale
+
+```{r}
+
+#| echo: false
+#| 
+ages=c(0:110)
+years=c(1922:2021)
+
+centralexposures.m <- UK$pop$male
+centraldeathrates.m <- UK$rate$male
+
+centraldeathrates.f <- UK$rate$female
+centralexposures.f <- UK$pop$female
+
+UK.male <- demogdata(data = centraldeathrates.m,
+                      pop = centralexposures.m,
+                      ages = ages,
+                      years = years,
+                      type = "mortality",
+                      label = "England and Wales",
+                      name = "male")
+
+UK.female <- demogdata(data = centraldeathrates.f,
+                        pop = centralexposures.f,
+                        ages = ages,
+                        years = years,
+                        type = "mortality",
+                        label = "England and Wales",
+                        name = "female")
+```
+
+
+```{r}
+
+plot(x = UK,
+     series="male",
+     datatype = "rate",
+     plot.type = "functions")
+
+plot(x = UK,
+     series="female",
+     datatype = "rate",
+     plot.type = "functions")
+
+plot(x = UK,
+     series="total",
+     datatype = "rate",
+     plot.type = "functions")
+
+
+```
+
+In generale si può vedere che l'andamento dei grafici in tutti e tre i grafici è molto simile. 
+
+I valori risultano però essere minori nella serie femminile rispetto alla serie maschile ciò indica un tasso di mortalità più alto negli uomini che nelle donne.
+
+* In generale osserviamo:
+    + Un miglioramento dei mortality rates andano avanti negli anni a qualsiasi età. Risulta essere particolarmente pronunciato in età giovanile (cioè compreso tra 0 e 20 anni) e man mano tende a ridursi con l'avanzare dell'età. 
+    + Una chiara ed aspettata relazione positiva tra mortality rates ed età dell’individuo, qualsiasi sia l’anno di calendario considerato. Salvo alla nascita dove il tasso è più alto che negli anni immediatamente successivi.
+    + Abbiamo una sorta di rumore di fondo sia per chi supera i 100 anni di età sia per i dati molto lontani nel tempo dove in entrambi i casi abbiamo pocha informazione.
+    
+
+<br>
+
+Del grafico osservato in precedenza possiamo ottenere una versione smoothed:
+
+```{r}
+#| echo: false
+
+UK.s <- smooth.demogdata(data = UK,
+                         method = "mspline",
+                         b = 65)
+```
+
+```{r}
+UK.s.f <- smooth.demogdata(data = UK.female,
+                         method = "mspline",
+                         b = 65)
+plot(UK.s.f)
+
+UK.s.m <- smooth.demogdata(data = UK.male,
+                         method = "mspline",
+                         b = 65)
+plot(UK.s.m)
+
+```
+
+
+### Profilo della mortalità
+
+Partendo sempre dai dati che abbiamo immediatamente a disposizione potrebbe essere interessante vedere il variare dei mortality rate rispetto al tempo per una data età fissata. Le età prese in considerazione sono quelle che vanno da 0 a 100 con intervalli di 10 anni.
+
+
+```{r}
+
+
+plot(x = UK.s,
+     series="total",
+     datatype = "rate",
+     ages = c(0,10,20,30,40,50,60,70,80,90,100),
+     plot.type = "time",xlab="Year")
+
+
+plot(x = UK.s,
+     series="male",
+     datatype = "rate",
+     ages = c(0,10,20,30,40,50,60,70,80,90,100),
+     plot.type = "time",xlab="Year",)
+
+
+plot(x = UK.s,
+     series="female",
+     datatype = "rate",
+     ages = c(0,10,20,30,40,50,60,70,80,90,100),
+     plot.type = "time",xlab="Year")
+
+```
+
+
+Quella che salta immediatamente all'occhio è la linea rossa che rappresenta l'età 0 quindi la sopravvivenza alla nascita. Risulta quella con il miglioramento pù elevato seguita successivamente dalla linea arancione rappresentativa dei 10 anni. Da un punto di vista generale sembra esserci un miglioramento per ogni fascia di età ad eccezione per la linea viola rappresentativa dei 100 anni. Questo risulta essere abbastanza logico visto che una volta raggiunta quell'età l'aspettativa di vita è estremamente bassa sia che si vivesse nel 1920 sia oggi.
+
+<br>
+
+La mortalità femminile è in generale sempre minore di quella maschile.
+
+
+### Averege Annual Improvment Rates
+
+Quanto visto graficamente in precedenza verrà riproposo qui di seguito andando ad analizzare i tassi di miglioramento annui medi della mortalità per le diverse età.
+
+
+```{r}
+
+t.miglioramento<- ((1-(UK.s$rate$total[,100]/UK.s$rate$total[,1]))*100)
+
+t.miglioramento1<-as.data.frame(t.miglioramento)
+
+colnames(t.miglioramento1)<-"Tasso miglioramento della mortalita' %"
+
+rownames(t.miglioramento1)<-as.character(c(0:110))
+
+t.mig.medio<-t.miglioramento/(100)
+
+```
+
+Per rendere le informazioni più fruibili e di impatto più immediato si effettua un raggruppamento delle età in intervalli di 5 anni e si considerà il miglioramento annuale medio. Dato il peso che ha la mortalità alla nascità si è deciso di considerare solo quell'età singolarmente.
+
+Ad esempio per tutto il periodo dal 1922 al 2021, può essere utile, a fini informativi raggruppare le età vicine e considerare il miglioramento annuale medio, anche per le età.
+
+```{r}
+
+t.mig.medio.r<-c(1:23)
+
+t.mig.medio.r[1] <- t.mig.medio[1]#neonati messi da soli
+
+t.mig.medio.r[2]<-mean(t.mig.medio[2],t.mig.medio[3],t.mig.medio[4],t.mig.medio[5],t.mig.medio[6]) #da 1 a 5 anni
+
+t.mig.medio.r[3]<-mean(t.mig.medio[7],t.mig.medio[8],t.mig.medio[9],t.mig.medio[10],t.mig.medio[11])#da 6 a 10 anni
+
+t.mig.medio.r[4]<-mean(t.mig.medio[12],t.mig.medio[13],t.mig.medio[14],t.mig.medio[15],t.mig.medio[16])#da 11 a 15 anni
+
+t.mig.medio.r[5]<-mean(t.mig.medio[17],t.mig.medio[18],t.mig.medio[19],t.mig.medio[20],t.mig.medio[21])#da 16 a 20 anni
+
+t.mig.medio.r[6]<-mean(t.mig.medio[22],t.mig.medio[23],t.mig.medio[24],t.mig.medio[25],t.mig.medio[26])#da 22 a 26 anni
+
+t.mig.medio.r[7]<-mean(t.mig.medio[27],t.mig.medio[28],t.mig.medio[29],t.mig.medio[30],t.mig.medio[31]) #da 27 a 31 anni
+
+t.mig.medio.r[8]<-mean(t.mig.medio[32],t.mig.medio[33],t.mig.medio[34],t.mig.medio[35],t.mig.medio[36]) #da 32 a 36 anni
+
+t.mig.medio.r[9]<-mean(t.mig.medio[37],t.mig.medio[38],t.mig.medio[39],t.mig.medio[40],t.mig.medio[41]) #da 37 a 41 anni
+
+t.mig.medio.r[10]<-mean(t.mig.medio[42],t.mig.medio[43],t.mig.medio[44],t.mig.medio[45],t.mig.medio[46]) #da 42 a 46 anni
+
+t.mig.medio.r[11]<-mean(t.mig.medio[47],t.mig.medio[48],t.mig.medio[49],t.mig.medio[50],t.mig.medio[51]) #da 47 a 51 anni
+
+t.mig.medio.r[12]<-mean(t.mig.medio[52],t.mig.medio[53],t.mig.medio[54],t.mig.medio[55],t.mig.medio[56])#da 52 a 56 anni
+
+t.mig.medio.r[13]<-mean(t.mig.medio[57],t.mig.medio[58],t.mig.medio[59],t.mig.medio[60],t.mig.medio[61])#da 57 a 61 anni
+
+t.mig.medio.r[14]<-mean(t.mig.medio[62],t.mig.medio[63],t.mig.medio[64],t.mig.medio[65],t.mig.medio[66])#da 62 a 66 anni
+
+t.mig.medio.r[15]<-mean(t.mig.medio[67],t.mig.medio[68],t.mig.medio[69],t.mig.medio[70],t.mig.medio[71])#da 67 a 71 anni
+
+t.mig.medio.r[16]<-mean(t.mig.medio[72],t.mig.medio[73],t.mig.medio[74],t.mig.medio[75],t.mig.medio[76])#da 72 a 76 anni
+
+t.mig.medio.r[17]<-mean(t.mig.medio[77],t.mig.medio[78],t.mig.medio[79],t.mig.medio[80],t.mig.medio[81])#da 77 a 81 anni
+
+t.mig.medio.r[18]<-mean(t.mig.medio[82],t.mig.medio[83],t.mig.medio[84],t.mig.medio[85],t.mig.medio[86])#da 82 a 86 anni
+
+t.mig.medio.r[19]<-mean(t.mig.medio[87],t.mig.medio[88],t.mig.medio[89],t.mig.medio[90],t.mig.medio[91])#da 87 a 91 anni
+
+t.mig.medio.r[20]<-mean(t.mig.medio[92],t.mig.medio[93],t.mig.medio[94],t.mig.medio[95],t.mig.medio[96])#da 92 a 96 anni
+
+t.mig.medio.r[21]<-mean(t.mig.medio[97],t.mig.medio[98],t.mig.medio[99],t.mig.medio[100],t.mig.medio[101])#da 97 a 101 anni
+
+t.mig.medio.r[22]<-mean(t.mig.medio[102],t.mig.medio[103],t.mig.medio[104],t.mig.medio[105],t.mig.medio[106])#da 102 a 106 anni
+
+t.mig.medio.r[23]<-mean(t.mig.medio[107],t.mig.medio[108],t.mig.medio[109],t.mig.medio[100],t.mig.medio[111])#da 107 + 
+
+t.mig.medio.r1<-as.data.frame(t.mig.medio.r)
+
+colnames(t.mig.medio.r1)<-"Miglioramento tasso mort. medio annuo %, 1922-2021"
+
+rownames(t.mig.medio.r1)<-c("0","1-5","6-10","11-15","16-20","21-25","26-30","31-35","36-40","41-45","46-50","51-55","56-60","61-65","66-70","71-75","76-80","81-85","86-90","91-95","96-100","101-105","106-110")
+
+gruppi<-c("0","1-5","6-10","11-15","16-20","21-25","26-30","31-35","36-40","41-45","46-50","51-55","56-60","61-65","66-70","71-75","76-80","81-85","86-90","91-95","96-100","101-105","106-110")
+
+t.mig.medio.r1
+
+```
+
+
+```{r}
+
+plot(c(1:23),
+     t.mig.medio.r,
+     type = "l",
+     xlab = "età",
+     ylab = "Miglioramento medio",
+     xaxt = "n")
+
+axis(1,
+     at = c(1:23),
+     labels = gruppi)
+
+```
+
+Per le età comprese 0 e 25 si osserva un migliramento maggiore. Un ulteriore aspetto che si può andare ad analizzare è la divisone in periodi.
+* Andrò a dividere in 4 periodi:
+    + 1922 - 1946
+    + 1947 - 1971
+    + 1972 - 1996
+    + 1997 - 2022
+
+
+
+```{r}
+
+miglioramento2246<- ((1-(UK.s$rate$total[,25]/UK.s$rate$total[,1]))*100)
+miglioramento4771<- ((1-(UK.s$rate$total[,50]/UK.s$rate$total[,26]))*100)
+miglioramento7296<- ((1-(UK.s$rate$total[,75]/UK.s$rate$total[,51]))*100)
+miglioramento9722<- ((1-(UK.s$rate$total[,100]/UK.s$rate$total[,76]))*100)
+
+
+
+t.mig.medio2246<-miglioramento2246/(25)
+t.mig.medio4771<-miglioramento4771/(25)
+t.mig.medio7296<-miglioramento7296/(25)
+t.mig.medio9722<-miglioramento9722/(25)
+
+
+t.mig.medio.r2246<-c(1:21)
+t.mig.medio.r4771<-c(1:21)
+t.mig.medio.r7296<-c(1:21)
+t.mig.medio.r9722<-c(1:21)
+
+
+
+
+
+
+t.mig.medio.r2246[1]<-t.mig.medio2246[1]
+k=0
+for(i in 2:21){t.mig.medio.r2246[i]<-mean(t.mig.medio2246[2+k],t.mig.medio2246[3+k],t.mig.medio2246[4+k],t.mig.medio2246[5+k],t.mig.medio2246[6+k])
+k<-k+5}
+
+
+
+t.mig.medio.r4771[1]<-t.mig.medio4771[1]
+k=0
+for(i in 2:21){t.mig.medio.r4771[i]<-mean(t.mig.medio4771[2+k],t.mig.medio4771[3+k],t.mig.medio4771[4+k],t.mig.medio4771[5+k],t.mig.medio4771[6+k])
+k<-k+5}
+
+
+t.mig.medio.r7296[1]<-t.mig.medio7296[1]
+k=0
+for(i in 2:21){t.mig.medio.r7296[i]<-mean(t.mig.medio7296[2+k],t.mig.medio7296[3+k],t.mig.medio7296[4+k],t.mig.medio7296[5+k],t.mig.medio7296[6+k])
+k<-k+5}
+
+
+t.mig.medio.r9722[1]<-t.mig.medio9722[1]
+k=0
+for(i in 2:21){t.mig.medio.r9722[i]<-mean(t.mig.medio9722[2+k],t.mig.medio9722[3+k],t.mig.medio9722[4+k],t.mig.medio9722[5+k],t.mig.medio9722[6+k])
+k<-k+5}
+
+
+
+
+
+gruppinuovo<-c("0","1-5","6-10","11-15","16-20","21-25","26-30","31-35","36-40","41-45","46-50","51-55","56-60","61-65","66-70","71-75","76-80","81-85","86-90","91-95","96-100")
+
+t.mig.medio.r2246a<-as.data.frame(t.mig.medio.r2246)
+
+colnames(t.mig.medio.r2246a)<-"Miglioramento tasso mort medio annuo %, 1922-1946"
+
+rownames(t.mig.medio.r2246a)<-c("0","1-5","6-10","11-15","16-20","21-25","26-30","31-35","36-40","41-45","46-50","51-55","56-60","61-65","66-70","71-75","76-80","81-85","86-90","91-95","96-100")
+
+t.mig.medio.r4771a<-as.data.frame(t.mig.medio.r4771)
+
+colnames(t.mig.medio.r4771a)<-"Miglioramento tasso mort medio annuo %, 1947-1971"
+
+rownames(t.mig.medio.r4771a)<-c("0","1-5","6-10","11-15","16-20","21-25","26-30","31-35","36-40","41-45","46-50","51-55","56-60","61-65","66-70","71-75","76-80","81-85","86-90","91-95","96-100")
+
+t.mig.medio.r7296a<-as.data.frame(t.mig.medio.r7296)
+
+colnames(t.mig.medio.r7296a)<-"Miglioramento tasso mort medio annuo %, 1972-2096"
+
+rownames(t.mig.medio.r7296a)<-c("0","1-5","6-10","11-15","16-20","21-25","26-30","31-35","36-40","41-45","46-50","51-55","56-60","61-65","66-70","71-75","76-80","81-85","86-90","91-95","96-100")
+
+
+t.mig.medio.r9722a<-as.data.frame(t.mig.medio.r9722)
+
+colnames(t.mig.medio.r9722a)<-"Miglioramento tasso mort medio annuo %, 1996-2022"
+
+rownames(t.mig.medio.r9722a)<-c("0","1-5","6-10","11-15","16-20","21-25","26-30","31-35","36-40","41-45","46-50","51-55","56-60","61-65","66-70","71-75","76-80","81-85","86-90","91-95","96-100")
+
+
+
+
+
+t.mig.medio.r2246
+t.mig.medio.r4771
+
+t.mig.medio.r7296
+t.mig.medio.r9722
+
+```
+
+
+```{r}
+
+
+
+plot(c(1:21),
+     t.mig.medio.r2246,
+     type = "l",
+     xlab = "età",
+     xaxt = "n",
+     col="red",
+     ylab="AAIR",
+     ylim = c(-1, 3.5))
+
+lines(c(1:21),
+      t.mig.medio.r4771,
+      type = "l",
+      xlab = "età",
+      xaxt = "n",
+      col="blue")
+
+lines(c(1:21),
+      t.mig.medio.r7296,
+      type = "l",
+      xlab = "età",
+      xaxt ="n",
+      col="green")
+
+lines(c(1:21),
+      t.mig.medio.r9722,
+      type = "l",
+      xlab = "età",
+      xaxt = "n",
+      col="orange")
+
+axis(1, at = c(1:21), labels = gruppinuovo)
+
+
+legend(x="topright",
+       legend=c("22-46","47-71","72-96","97-22"),
+       col=c("red","blue","green","orange"),
+       lty = 1,
+       cex=0.4)
+
+
+
+```
+
+I migliormaneti per le età giovanili sono stati maggiori nel passato  mentre a ultimamente il miglioramento si vede in particolare per le età comprese tra i 70 e gli 85 anni.
+
+
+### Andamento Popolazione
+
+Altro dato che può essere di immediata lettura è il numero di esposti al rischio per ogni età cioè il numero di persone in vita divisi per età per ogni anno preso in considerazione.
+
+```{r}
+
+plot(x = UK.s,
+     series = "total",
+     datatype = "pop",
+     plot.type = "functions",
+     years=c(1921,1930,1940,1950,1960,1970,1980,1990,2000,2010,2022))
+
+
+plot(x = UK.s,
+     series = "total",
+     datatype = "pop",
+     plot.type = "time",
+     age=c(0,10,20,30,40,50,60,70,80,90),xlab="Year")
+
+```
+
+
+Si nota in generale un miglioramento per le età avanzate. mentre le età giovanili sono quasi piatte e ciò sta ad indicare che non c'è stato ungrande cambiamento nel numero degli esposti al rischio in quelle età.
+
+
+
+### Aspettativa di vita
+
+
+Posso vedere anche la vita attesa.
+
+```{r}
+
+centralexposures.t=UK$pop$total
+
+plot(centralexposures.t,
+     ylab = "Vita attesa",
+     main = "Vita attesa alle età 0,20,40,60,80",
+     ylim=c(50,100),
+     xlim=c(1922,2020))
+
+lines(life.expectancy(data = UK,
+                      type = "period",
+                      age  = 0)+0, 
+                      col="red")
+
+lines(life.expectancy(data = UK,
+                      type = "period",
+                      age = 20)+20, 
+                      col="green")
+
+lines(life.expectancy(data = UK,
+                      type = "period",
+                      age = 40)+40, 
+                      col="purple")
+
+lines(life.expectancy(data = UK,
+                      type = "period",
+                      age = 60)+60,
+                      col="blue")
+lines(life.expectancy(data = UK,
+                      type = "period",
+                      age = 80)+80,
+                      col="black")
+
+```
+
+
+
+La vita attesa ad età più elevate di partenza è sempre maggiore di quella ad età di partenza più piccole data che parte dalla premessa di aver vissuto almeno fino a quell’età, eliminando quindi la probabilità di decedere in precedenza. Quindi il grafico è leggibile dal basso verso l’alto (per la vita attesa ad età 0,20,40,60,80)
+
+<br>
+
+* Tolto questo posso notare che:
+    + la vita attesa alla nascita incrementa notevolmente, quella a 20/40/60 anni leggermente, mentre quelle a 80 anni molto meno. Questo indica che i miglioramenti riguardanti la mortalità relativa alla nascita e ad età “giovani” sono più marcati almeno in termini assoluti.
+     
+    + dal 1970 le linee procedono quasi parallele, mostrando che quasi tutto il miglioramento della mortalità alle età viste è stato assorbito.
+
+
+
+## (2) Stima del modello Lee-Carter
+
+
+L’intento ora è di fare previsioni sulla mortalità futura; per fare questo è stato utilizzato il modello Lee-Carter (MLE). In questa secondo capitolo si otterranno le stime dei parametri fatte su una parte del campione (fitting set) per poi confrontare le previsioni del modello con la parte del campione esclusa (testing set), in modo da verificare l’accuratezza del modello. Nel capitolo successivo ci si concentrerà invece sulle effettive previsioni future, cioè oltre il campione, affiancate ad osservazioni e commenti
+
+
+
+### Il modello Lee-Carter
+
+Il modello è definito dalle seguenti ipotesi:
+
+<br>
+
+$$\log m_{x,t} = \alpha_{x} + \beta_{x}k_{x} + \varepsilon_{x,t}$$
+
+* questo:
+    + $\forall x$ = Età del campione 
+    + $t$ = anni del campione
+
+<br>
+
+* Dove abbiamo:
+
+    + $m_{x,t}$: Tassi di mortalità centrale che sono stati osservati in precedenza
+    
+    + $\alpha_{x}$: Parametro che indica la mortalità baseline per età che è costante nel tempo
+    
+    + $k_{t}$ : Parametro che indica la variazione della mortalità dovuta al tempo che è costante per età, sotto la restrizione che $\sum_{\forall \; t} k_{t}=0$
+    
+    + $\beta_{x}$ : Parametro che indica la percentuale dell’incremento che va attribuito ad una specifica età, costante nel tempo, sotto la restrizione che $\sum_{\forall \; x} \beta_{x}=1$
+    
+    + $\varepsilon_{x,t}$: Termine d’errore, stocastico, tale per cui: 
+      $\varepsilon_{x,t} \sim N(0,\sigma^{2}_{\varepsilon})$
+
+
+
+
+
+Le stime dei parametri sono ottenute tramite l’imposizione delle due restrizioni e tramite una scomposizione matriciale detta “Singular Vector Decomposition”. Si considera poi la componente $k_{t}$ come stocastica, ovvero è trattata come una serie storica, nello specifico un processo ARIMA. Poiché in particolare la serie si osserva spesso decrescere linearmente (in termini attesi) si utilizza un’ARIMA(0,1,0), che equivale ad una Random Walk con drift d:
+
+
+$$κ_{t} = κ_{t−1} + d + \varepsilon_{t}  \; \; \; con \, \varepsilon_{t} \sim White  \; Noise$$
+<br>
+
+Quindi per fare previsioni sul nostro modello è necessario anche stimare d, supponendo che le ipotesi siano rispettate.
+
+
+### Fitting e Testing set
+
+Al fine di di avere delle stime il più possibile affidabili si lavora non sull'intero campione ma su un suo sottoinsieme limitato.
+Limitato sia rispetto all'anno che all'età questo perché esse dipendono dalla numerosità delle unità statistiche. 
+Si è deciso quindi di utilizzare per l’età un range da 0 a 100; mentre, per quanto riguarda l’anno, la scelta risultà essere complessa perché  bisogna prendere in considerazione la possibile presenza di trend storici. Si è scelto di partire dal 1970 come estremo inferiore, mentre il superiore si farà variare per osservare quanto il modello è in grado di accostare dati realistici, questo per 2015 e 2000. Gli anni successivi di conseguenza andrannoa  costituire il *testing set*.
+
+
+### Modello Lee-Carter per anni fino al 2015
+
+
+Stimiamo i modelli separatamente per maschi e femmine.
+
+
+```{r}
+
+fm1 <- lca(data = UK.male, 
+           series = "male", 
+           years = 1970:2015,
+           ages = 0:110, 
+           max.age = 100, 
+           adjust = "none")
+
+ff1 <- lca(data = UK.female,
+           series = "female",
+           years = 1970:2015,
+           ages = 0:110,
+           max.age = 100,
+           adjust = "none"
+           )
+
+
+```
+
+
+Qui di seguito posssiamo osservare graficamente le stime ottenute per i tre parametri del modello:
+
+
+```{r}
+
+plot(ff1$ax, type="l", col="pink", xlab= "Età",ylab=expression(a[x]))
+
+lines(fm1$ax, type="l", col="blue")
+
+legend(x="topleft",lty = 1,legend = c("femmina","maschio"),
+       col = c("pink","blue"),title = "genere")
+
+
+```
+
+
+Il parametro è interpredabile come la mortalità baseline per l’età, infatti la stima è ottenuta come media delle diverse curve rispetto all’anno. Il confronto per genere conferma ciò che ci si aspettava, ovvero che la mortalità maschile è maggiore rispetto alla femminile.
+
+
+
+```{r}
+
+plot(ff1$bx, type="l", col="pink", xlab= "Età",ylab=expression(b[x]))
+lines(fm1$bx, type="l", col="blue")
+legend(x="topright",lty = 1,legend = c("femmina","maschio"),
+       col = c("pink","blue"),title = "genere")
+
+```
+
+
+
+
+Quello che si può dire vedendo queste curve è che le classi di età
+più giovani in generale giovano di più dei miglioramenti nella mortalità rispetto alle classi più adulte. Questa differenza si evidenzia ancor di più per i maschi rispetto alle femmine. Successivamente nell'intervallo che va dai 20 ai 50 anni la curva femminile sovrasta quella maschile descrivendo quindi un miglioramento più accentuato il nelle classe delle donne. 
+Tra  i 50 e i 75  riavviene un inversione che ci dice che il miglioramento della mortalità è più accentuato nella classe maschile.
+Nella parte finale le curve sono quasi sovrapponibili non andando a indicare differenze evidenti una volta arrivati alla soglia dei 75 anni.
+
+
+```{r}
+
+
+plot(ff1$kt, 
+     type="l", 
+     col="pink", 
+     xlab= "Anno",
+     ylab=expression(k[t]))
+
+lines(fm1$kt, 
+      type="l", 
+      col="blue")
+
+legend(x="topright",
+       lty = 1,
+       legend = c("femmina","maschio"),
+       col = c("pink","blue"),
+       title = "genere")
+
+```
+
+
+Le curve decrescenti stanno ad indicare un tendenziale miglioramento della mortalità negli anni valido per entrambi i generi.
+Risulta interessante vedere che il miglioramento va di pari passo sia per il genere femminile che per il genere maschile ad eccezione degli anni che vanno dal 2020 in poi in cui si vede un miglioramento più accentiato nle caso femminile. Questo non sta ad indicare che la mortalità è maggiore per i maschi, ma che i miglioramenti si osservano di più nella mortalità femminile.
+
+
+L’andamento lineare non ci stupisce dato che si tende a modellizzarla come una random walk con drift.
+
+### Aggiustamento per mortalità o per aspettativa di vita
+
+Qui di seguito si può ristimare il modello tenedo conto degli aggiustamenti per rendere uguali i decessi osservati con i valori fittati oppure la speranza di vita con i valori fittati (quest’ultima opzione è spesso
+preferita perché la speranza di vita ha un andamento più regolare). Il procedimento di ristima è effettuato solo per il parametro $k_{t}$, mentre le stime per gl’altri due parametri rimangono le stesse
+
+
+```{r}
+
+ff1_dt<-lca(data = UK,
+            series = "female", 
+            years = 1970:2015,
+            ages = 0:110, 
+            max.age = 100, 
+            adjust = "dt")
+
+ff1_e0<-lca(data = UK, 
+            series = "female", 
+            years = 1970:2015,
+            ages = 0:110, 
+            max.age = 100, 
+            adjust = "e0")
+
+fm1_dt<-lca(data = UK, 
+            series = "male", 
+            years = 1970:2015,
+            ages = 0:110, 
+            max.age = 100, 
+            adjust = "dt")
+fm1_e0<-lca(data = UK, 
+            series = "male", 
+            years = 1970:2015,
+            ages = 0:110, 
+            max.age = 100, 
+            adjust = "e0")
+
+
+
+```
+
+Si può fare un confronto grafico, come in precedenza, delle stime dei $k_{t}$. 
+
+```{r}
+
+
+plot(ff1$kt,
+     type="l",
+     col="red",
+     xlab= "Età",
+     ylab=expression(k[t]),
+     main="Confronto delle stime in presenza di aggiustamento", 
+     ylim= c(-150,150))
+
+lines(ff1_dt$kt, type="l", col="blue")
+
+lines(ff1_e0$kt, type="l", col="green")
+
+legend(x="topright",
+       lty = 1,
+       legend = c("No agg.","Agg. per dec.","Agg. per spe. vita"),
+       col = c("red","blue","green"),
+       title = "Aggiustamento",
+       cex = 0.8)
+
+plot(fm1$kt,
+     type="l",
+     col="red",
+     xlab= "Età",
+     ylab=expression(k[t]),
+     main="Confronto delle stime in presenza di aggiustamento", 
+     ylim= c(-150,150))
+
+lines(fm1_dt$kt, type="l", col="blue")
+
+lines(fm1_e0$kt, type="l", col="green")
+
+legend(x="topright",
+       lty = 1,
+       legend = c("No agg.","Agg. per dec.","Agg. per spe. vita"),
+       col = c("red","blue","green"),
+       title = "Aggiustamento",
+       cex = 0.8)
+
+
+
+
+
+```
+
+Le differenze sia nel grafico che rappresenta gli uomini che in quello che rappresenta le donne non sono percepibili.
+
+
+
+
+### Validazione del modello sul testing set
+
+Ora, tramite i modelli stimati, si confrontano i valori futuri stimati sul periodo 2016-2021 (il testing set) coni valori effettivamente osservati.
+
+```{r}
+
+Ff1<-forecast(object = ff1,h=5)
+
+Fm1<-forecast(object = fm1,h=5)
+
+Ff1_e0<-forecast(object = ff1_e0,h=5)
+
+
+```
+
+Inizialmente si può andare a confrontare il tasso di mortalità fittato contro l’osservato,per l’anno 2016, per le femmine tenendo conto anche della ristima per aggiustamento alla speranza di vita:
+
+```{r}
+
+plot(UK,
+     series = "female",
+     datatype = "rate",
+     plot.type = "function",
+     years = 2016,
+     max.age = 100,
+     col="red")
+
+lines(Ff1,
+      datatype = "rate",
+      years = 2016,
+      col="blue")
+
+lines(Ff1_e0,
+      datatype = "rate",
+      years = 2016,
+      col="green")
+
+legend(x="topleft",lty = 1,
+       legend = c("Oss.","Fit non agg.","Fit agg. e0"),
+       col = c("red","blue","green"),
+       title = "Curve",
+       cex = 0.8)
+
+```
+
+
+mentre per l’anno 2020:
+
+```{r}
+
+plot(UK,
+     series = "female",
+     datatype = "rate",
+     plot.type = "function",
+     years = 2020,
+     max.age = 100,
+     col="red")
+
+lines(Ff1,
+      datatype = "rate",
+      years = 2020,
+      col="blue")
+
+lines(Ff1_e0,
+      datatype = "rate",
+      years = 2020,
+      col="green")
+
+legend(x="topleft",lty = 1,
+       legend = c("Oss.","Fit non agg.","Fit agg. e0"),
+       col = c("red","blue","green"),title = "Curve",
+       cex = 0.8)
+```
+
+
+
+* Questa prima analisi si può dire che:
+    + Entrambe le curve seguono abbastanza bene i dati osservati in particolar modo la prima (visto che indica la previsione ad un anno) . La curva con l'aggiustamento e quella senza si ricalcano perfettamnte al punto tale da non rendere necessario l’uso dell’aggiustamento nelle previsioni.
+    + Le stime tendono a peggiorare allontanandosi dal 2016.
+    
+    + C'è una leggerea tendenza a sottistimare la mortalità dai 35 ai 60 anni
+Per andare a verificare  quanto la curva stimata si avvicina alle osservazioni possiamo usare l’intervallo di confidenza:
+
+```{r}
+
+plot(UK,
+     series = "female",
+     datatype = "rate",
+     plot.type = "function",
+     years = 2016,
+     max.age = 100,
+     col="red")
+
+lines(Ff1$age,log(Ff1$rate$lower[,1]),
+      col="blue",lty=3)
+
+lines(Ff1$age,log(Ff1$rate$upper[,1]),
+      col="blue",lty=3)
+
+legend(x="topleft",lty = c(1,3),
+       legend = c("Oss.","I.C."),
+       col = c("red","blue"),title = "Curve",
+       cex = 0.8)
+
+```
+ 
+Le osservazioni non escono di molto dall’intervallo di confidenza nelle età più giovani mentre da 25 anni in poi sono quasi perfettaemnte all'interno dell'intervallo di confidenza..
+Volendo può anche fissare una età in particolare e confrontare la serie storica osservata con quella stimata:
+
+
+```{r}
+
+plot(UK,
+     series = "female",
+     datatype = "rate",
+     plot.type = "time",
+     ages = 60,
+     years = c(2016,2017,2018,2019,2020),
+     col="red",
+     ylim=c(-5.4,-5.22))
+
+lines(Ff1$year,
+      log(Ff1$rate$female[61,]),
+      col="blue")
+
+legend(x="topright",lty = 1,
+       legend = c("Oss.","Fit."),
+       col = c("red","blue"),
+       title = "Curve")
+
+```
+
+Quello che si può notare è l’effetto della mortalità del Covid-19 nell’anno 2021, che modifica il trend decrescente.
+Un’altro confronto che può essere fatto è tramite la speranza di vita osservata con quella prevista:
+
+
+
+```{r}
+
+e0_oss<-life.expectancy(UK,
+                        series = "female",
+                        type = "period",
+                        age = 0,
+                        years = c(2016:2020))
+plot(e0_oss,
+     ylim=c(82,84),
+     col="red", 
+     ylab="",
+     xlab="Anni",
+     main="Aspettativa di vita alla nascita prevista contro l'osservata")
+
+lines(Ff1$e0,col="blue")
+legend(x="bottomright",lty = 1,
+       legend = c("Oss.","Fit."),
+       col = c("red","blue"),title = "Curve")
+
+```
+
+Questo tipo di confrotto può essere effettuato utilizzando una funzione propria del pacchetto *demography* la quale  permette di calcolare gli errori di previsione: “compare.demogdata”:
+
+
+```{r}
+
+
+Ff1_er<-compare.demogdata(UK,
+                          Ff1,
+                          series = "female",
+                          ages = 0:110, 
+                          max.age = 100)
+plot(Ff1_er)
+
+```
+
+
+Il grafico presenta l’errore ottenuto come differenza tra il log-tasso di mortalità centrale previsto e quello osservato. Si osserva una forte variabilità tra le classi giovani e un  errore sistematico di previsione nelle classi più anziane. 
+Risulta anche un peggioramento generale delle previsione nel moemnto in cui si passa da quelle del 2016 rappresentate dalla curva rossa a quelle del 2020 rappresentate dalla curva blu. 
+Il grafico può esssere riassunto considerando l’errore percentuale medio MPE:
+
+
+```{r}
+
+plot(Ff1_er$age,
+     Ff1_er$mean.error[,"MPE"],
+     type = "l",
+     xlab = "Età",
+     ylab="MPE",
+     main = "Errore percentuale medio per la mortalità femminile 2017-2021")
+
+```
+
+
+### Validazione del modello variando il training set
+
+
+* A questo punto vengono stimati altri due modelli in cui il testing set diventa
+    + 2011-2021 (modello 2)
+    + 2001-2021 (modello 3) 
+Questi due modelli andranno confrontati le le previsioni.
+
+
+```{r}
+
+ff2<-lca(data = UK, 
+         series = "female", 
+         years = 1970:2011,
+         ages = 0:110, 
+         max.age = 100, 
+         adjust = "none")
+
+ff3<-lca(data = UK, series = "female", 
+         years = 1970:2001,
+         ages = 0:110, 
+         max.age = 100, 
+         adjust = "none")
+
+Ff2<-forecast(ff2,h=10)
+Ff3<-forecast(ff3,h=20)
+
+```
+
+Sulla base del confronto grafico effettuato in precedenza e fissati gli anni 2016 e 2020 si rappresentano le osservazioni reali con i valori previsti nei tre modelli:
+
+```{r}
+
+plot(UK,
+     series = "female",
+     datatype = "rate",
+     plot.type = "function",
+     years = 2016,
+     max.age = 100,
+     col="red",
+     lwd=2)
+
+lines(Ff1,
+      datatype = "rate",
+      years = 2016,
+      col="blue")
+
+lines(Ff2,
+      datatype = "rate",
+      years = 2016,
+      col="green")
+
+lines(Ff3,
+      datatype = "rate",
+      years = 2016,
+      col="violet")
+
+legend(x="topleft",lty = 1,
+       legend = c("Oss.","Fit. 1","Fit. 2","Fit. 3"),
+       col = c("red","blue","green","violet"),
+       title = "Curve",lwd=c(2,1,1,1),
+       cex = 0.8)
+
+
+
+plot(UK,
+     series = "female",
+     datatype = "rate",
+     plot.type = "function",
+     years = 2020,
+     max.age = 100,
+     col="red",
+     lwd=2,
+     ylim=c(-11,-1))
+
+lines(Ff1,
+      datatype = "rate",
+      years = 2020,
+      col="blue")
+lines(Ff2,
+      datatype = "rate",
+      years = 2020,
+      col="green")
+lines(Ff3,
+      datatype = "rate",
+      years = 2020,
+      col="violet")
+legend(x="topleft",lty = 1,
+       legend = c("Oss.","Fit. 1","Fit. 2","Fit. 3"),
+       col = c("red","blue","green","violet"),
+       title = "Curve",lwd = c(2,1,1,1),
+       cex = 0.8)
+
+```
+
+
+VAlgono gli stessi commenti precedenti, il modello tende a sottostimare la mortalità adulta (tra i 30 e i 60 anni).
+Nonostante ciò le previsioni fatte possono essere comunque ritenute delle buone stime.
+
+Mentre per quanto riguarda gli errori di stima:
+
+
+```{r}
+
+Ff2_er<-compare.demogdata(UK,Ff2,series = "female")
+Ff3_er<-compare.demogdata(UK,Ff3,series = "female")
+
+plot(Ff3_er,main="Errore nella stima dei tassi per modello 3 per anni 2001-2021")
+
+```
+
+Quella che si puù notare è una tendenza a sottostimare i valori osservati nel range di età che va dai 35 fino ai 65.
+
+Qui di seguito osserviamo l’errore medio percentuale:
+
+
+```{r}
+
+plot(Ff1_er$age,
+     Ff1_er$mean.error[,"MPE"],
+     type = "l",
+     xlab = "Età",
+     ylab="MPE",
+     col = "red", 
+     ylim = c(-0.5,0.44),
+     main = "Errore percentuale medio per la mortalità femminile")
+
+lines(Ff2_er$age,
+      Ff2_er$mean.error[,"MPE"],
+      type = "l", 
+      col = "blue")
+
+lines(Ff3_er$age,
+      Ff3_er$mean.error[,"MPE"],
+      type = "l", 
+      col = "green")
+
+legend(x="bottomright",
+       lty = 1,
+       legend = c("Fit. 1","Fit. 2","Fit. 3"),
+       col = c("red","blue","green"),
+       title = "Curve",
+       cex = 0.8)
+
+
+```
+
+
+
+commenti fatti precedentemente.
+
+### Sintesi
+
+* Date queste osservazioni, si può concludere che:
+    + c'è una leggera sottostima della mortalità osservata nelle età adulte e una leggera sovrastima in età più avanzate.
+    
+    + Si osserva forte il break strutturale causato dal Covid-19 negli anni 2020 e 2021
+    
+In conclusione le previsioni possono essere considerate buone.
+
+
+## (3) Previsioni sulla mortalità futura
+
+QUi di seguito andremo ad effettuare una serie di previsioni non più interne la dataset ma al di fuori di esso. Tenendo conto di quanto è stato osservato in precedenza come ad esempio il break strutturale dato dagli anni del Covid-19. Proprio per questo gli anni che vanno dal 2019 al 2021 non verranno presi in considerazione al fine delle previsioni future poichè ci porterebbero a mostrare una mortalità più alta rispetto a quella che si potrebbe aspettare. Diconseguenza il Covid-19 viene interpretato come trend momentaneo. Gli anni che si considereranno sono quelli che vanno dal 1970 al 2018.
+Per quanto riguarda le età si prende il range 0-100 dove la numerosità campionaria è più elevata. 
+Non si usera alcun aggiustamento e le stime verranno effettuate su un intervallo temporale di 50 anni.
+
+
+```{r}
+
+Fitf<-lca(UK,
+          series = "female",
+          years = 1970:2018,
+          ages = 0:110,
+          max.age = 100,
+          adjust = "none")
+
+Fitm<-lca(UK,
+          series = "male",
+          years = 1970:2018,
+          ages = 0:110,
+          max.age = 100,
+          adjust = "none")
+
+FCf<-forecast(Fitf,h=50)
+FCm<-forecast(Fitm,h=50)
+
+
+
+```
+
+
+I grafici delle previsioni futurevanno  dal rosso che mi rappresenta l'anno più recente al viola che indica l'anno più lontano:
+
+```{r}
+
+
+plot(FCf)
+plot(FCm)
+
+
+
+
+```
+
+
+
+* Dall'analisi di  questi grafici possiamo concludere che:
+
+    + La mortalità è in decrescità per ogni età e per ambo i generi, in maniera maggiore per le classi di età giovani (da 0 a 20 anni), minore per le classi anziane. In particolare per gli uomini è interessante notare che in 50 anni di previsioni il miglioramento nella mortalità nel range di età che va dai 30 fino ai 40 anni sembra essere davvero ridotto.
+    + La mortalità femminile rimane inferiore rsipetto a quella maschile.
+    
+Al fine di evidenziare la differenza tra le mortalità maschili e femminili previste, si può osservare il grafico dei $k_{t}$ previsti, con relativo intervallo di confidenza:
+
+
+```{r}
+
+
+
+par(mfrow=c(1,2))
+
+plot(FCf$kt.f, 
+     main = "Previsione di Kt femminile",
+     xlab= paste("Drift = ",FCf$kt.f$mean[2]-FCf$kt.f$mean[1]))
+
+plot(FCm$kt.f, 
+     main = "Previsione di Kt maschile",
+     xlab= paste("Drift = ",FCm$kt.f$mean[2]-FCm$kt.f$mean[1]))
+
+
+
+```
+
+Il drift ci indica che le mortalità per entrambi i generi tendono a decrescere all'incirca con la stessa velocità.
+
+Osservando l'intervallo di confidenza si nota che al variare del tempo questo tende a crescere sempre di più a causa del fatto che il modello sottostante è una Random Walk, la cui varianza per il periodo di previosione è linearmente crescente.
+
+Un altro aspetto di interesse è l'aspettativa di vita alla nascita.
+
+```{r}
+
+
+plot(FCf$e0,
+     col="pink", 
+     main="Aspettativa di vita alla nascita",
+     ylim=c(75,93),
+     ylab="",
+     xlab="Anni")
+
+lines(FCm$year,
+      FCm$e0,
+      col="blue")
+
+legend(x = "topleft",
+       legend = c("femmina","maschio"),
+       col = c("pink","blue"),
+       lty = 1,
+       title = "Curve")
+
+```
+
+IN questo caso vediamo la fifferenza tra maschi e femmine in termini di aspettativa di vita. Le previsioni mostrano un divario costantecon l'aspettativa di vita per le donne che raggiungerà i 90 anni mentre quella degli uomini si attesta sugli 85.
+
+
+## Simulazioni
+
+### Simulazione dei $k_{t}$
+
+
+Partendo da quello che è il modello Lee-Carter:
+
+$$\log(m_{x,t}) = \alpha_{x} + \beta_{x}k_{t}+\varepsilon_{x,t} $$
+
+Andimo a prendere i parametri $\alpha_{x}$ e $\beta_{x}$  che abbiamo stimato in preced
+
+
+```{r}
+a <- Fitm$ax
+b <- Fitm$bx
+```
+
+
+Sucessivamente vado a ricavare il valore *d* e $\sigma_{e}$ che è la varianza del *white noise* nel modello sui $k_{t}$
+
+
+```{r}
+
+d <- (Fitm$kt[49]-Fitm$kt[1])/49
+
+
+sommaquadrati <- 0
+
+for(i in 2:49){
+  addendo <- ((Fitm$kt[i]-Fitm$kt[i-1]-d)^2)
+  sommaquadrati <- sommaquadrati+addendo 
+  }
+
+sigmae <- (1/48)*sommaquadrati
+
+d
+
+sigmae
+
+```
+
+Ignorando quelli che sono gli errori propri del modello di lee-carter vado a simulare i $k_{t}$ che equivale a simulare i tassi $m_{x,t}$.
+
+Prendendo un generico h che andrà da 1 a 50 considerando come punto di partenza $k_{2019}=k_{0}$ ultimo dei valori fitted.
+
+Ho una distribuzione di probabilità per $k_{n}$
+
+$$k_{n} \sim N(k_{0}+dh,\sigma^{2}h)$$
+
+dove ho ricavato in precedenza una stima di *d* e di $k_{h}$
+
+
+```{r}
+
+
+n<-1000
+
+ksim <- matrix(nrow=50,ncol=1000)
+
+# k1=k2020:
+
+ksim[1,] <- rnorm(1000,
+                  Fitm$kt[49]+d*1,
+                  sqrt(1*sigmae))
+
+
+
+
+ksim<-matrix(nrow=50,ncol=1000)
+
+for (h in 1:50){ksim[h,]<-rnorm(1000,Fitm$kt[49]+d*h,sqrt(h*sigmae))}
+
+
+
+```
+
+
+Ottengo una serie di 1000 valori simulati per ogni $k_{1}, k_{2}, ... , k_{50}$$ o equivalentemente $k_{2020}, k_{2021}, ..k_{2069}$
+
+Mostro 10 simulazioni per 5 anni.
+
+
+
+
+
+
+
+
+```{r}
+
+ksim<-as.data.frame(ksim)
+colnames(ksim)<-c(1:1000)
+rownames(ksim)<-c(2020:2069)
+ksim[c(1:5),c(1:10)]
+
+
+
+```
+
+### Trasformazione in mortality rate
+
+Per arrivare alla durata di vita attesa o al numero di anni attesi di vita vissuti ho bisogno di ritrovare i tassi di mortalità $m_{x,t}$ con t che adesso andrà da 2020 a 2069 mentre x da 0 a 100.
+
+Sempre partendo dal modello lee-carter ignorando l’errore presente nel modello stesso prendo gli $\alpha_{x}$ e i $\beta_{x}$ fittati.
+
+Un esempio: con $m_{0,h}$ al variare di h in 1:50 (dagli anni 2020 al 2069). Ottengo 1000 simulazioni di
+$k_{h}$.
+LAvorando su direttamente con:
+
+$$ m_{0,h} = \exp(\alpha_{0}+\beta_{0},k_{h})$$
+per ogni h otterrò 1000 $m_{0,h}$, dunque 1000 storie per l’evoluzione dei tassi di mortalità nei 50 anni per gli individui di età zero.
+Riporto qui 5 simulazioni(colonne) per tutti gli anni nel futuro (righe).
+
+
+
+
+
+```{r}
+
+
+emme0t <- matrix(nrow=50,ncol=1000)
+
+for (i in 1:1000){emme0t[,i] <- exp(a[1]+b[1]*ksim[,i])}
+
+emme0t <- as.data.frame(emme0t)
+
+
+rownames(emme0t)<-c(2020:2069)
+
+colnames(emme0t)<-c(1:1000)
+
+emme0t[c(0:50),c(1:5)]
+
+
+
+```
+
+
+
+Il procedimento può essere esteso alle età 1:100 per cui ho ricavato gli $\alpha_{x}$ e i $\beta_{x}$.
+* Non vado a riportare i risultati, ma arrivo di fatto a 101 matrici salvate in una lista con:
+    + Ogni matrice per un età fissata (0 la prima, 100 la 101esima)
+    + Ogni matrice contiene gli mx,t simulati per la x fissata, con l’anno t che varia tra le righe, mentre la simulazione (1000 in tutto) varia tra le colonne.
+
+
+
+
+
+```{r}
+
+listaemme<-list()
+
+listaemme[[1]]<-emme0t
+
+for(k in 1:101){listaemme[[k]]<-matrix(nrow=50,ncol=1000)}
+for(k in 1:101){listaemme[[k]]<-exp(a[k]+b[k]*ksim)}
+
+
+```
+
+
+### Distribuzione della durata della vita attesa
+
+
+Ora posso passare all’esercizio. Mi viene richiesto di ottenere per ogni anno futuro la distribuzione empirica della durata attesa di vita alla nascita, quantità dipendente dai mortality rates.
+
+Idea: invece di procedere direttamente mi ricreo dei file demogdata ed utilizzo la funzione di life expectancy inclusa. La popolazione non dovrebbe cambiare la vita attesa, dato che dovrebbe usare solo i rates per il calcolo, la fisso dunque a dei numeri qualsiasi.
+
+Faccio un esempio con la prima simulazione:
+
+
+
+
+```{r}
+
+
+
+centralmrates<-matrix(nrow=101,ncol=50)
+
+centralfakeexposure<-matrix(nrow=101,ncol=50)
+
+for(i in 1:101){centralmrates[i,1]<-listaemme[[i]][1,1]}
+for(i in 1:101){centralmrates[i,2]<-listaemme[[i]][2,1]}
+for(i in 1:101){centralmrates[i,3]<-listaemme[[i]][3,1]}
+
+#mx,t simulati la prima volta, età sulle righe, anni sulle colonne.
+
+centralmrates<-matrix(nrow=101,ncol=50)
+for(k in 1:50){for (i in 1:101){centralmrates[i,k]<-listaemme[[i]][k,1]}}
+
+#false exposure, serve piena comunque la matrice o si arrabbia
+
+for(k in 1:50){for (i in 1:101){centralfakeexposure[i,k]<-i*k}}
+Sim1 <- demogdata(centralmrates,
+                  centralfakeexposure,
+                  ages=c(0:100),
+                  years=seq(2020,2069,1),
+                  type = "mortality", 
+                  label = "Try1",
+                  name = "T1")
+
+e1 <- life.expectancy(data = Sim1,
+                      type = "period",
+                      age = 0)
+
+
+e1
+
+```
+
+
+
+Ora è richiesto per ogni anno di arrivare ad una distribuzione empirica della vita attesa, dunque devo generalizzare il procedimento di prima a tutte le simulazioni.
+
+
+```{r}
+
+expectancy<-matrix(nrow=1000,ncol=50)
+
+expectancy[1,]<-e1
+
+expectancy<-as.data.frame(expectancy)
+
+colnames(expectancy)<-seq(2020,2069,1)
+
+head(expectancy)
+
+
+```
+
+
+Riempirò questa matrice, dove le colonne sono gli anni, le righe il numero della simulazione e l’elemento è la vita attesa alla nascita per l’anno.
+
+
+
+```{r}
+
+
+#l'idea base è che dipende solo da j=1...1000 numero della simulazione, facciamo dunque una funzione in j
+e0function<-function(j){
+centralmrates<-matrix(nrow=101,ncol=50)
+centralfakeexposure<-matrix(nrow=101,ncol=50)
+for(k in 1:50){for (i in 1:101){centralmrates[i,k]<-listaemme[[i]][k,j]}}
+for(k in 1:50){for (i in 1:101){centralfakeexposure[i,k]<-i*k}}
+Sim<-demogdata(centralmrates,centralfakeexposure,ages=c(0:100),years=seq(2020,2069,1),type = "mortality", label = "Try",name = "T")
+e1<-life.expectancy(data = Sim,
+type = "period",
+age = 0)
+return(e1)
+}
+
+```
+
+
+Con le prime 2 simulazioni:
+
+
+```{r}
+
+expectancy[2,]<-e0function(2)
+head(expectancy)
+
+
+
+```
+
+
+Poi tramite l'utilizzo di un ciclo *for* la finisco di riempire
+
+
+```{r}
+for (i in 3:1000){expectancy[i,]<-e0function(i)}
+head(expectancy)
+```
+
+
+Ora ogni colonna della matrice mi rappresenta le determinazioni simulate della durata attesa di vita, fissato l’anno. Posso ricavare valori medi, intervalli di confidenza o anche la distribuzione empirica.
+
+Ad esempio posso guardare alla densità empirica per un fissato anno tipo 2023
+
+```{r}
+
+plot(density(expectancy[,4]),main="",xlab="e0-2023")
+
+
+```
+  o anche come si evolve durante tutto il periodo preso in considerazione
+```{r}
+
+colors <- colorRampPalette(colors = c("blue", "yellow"))
+plot(density(expectancy[,1]),main="",xlab="e0-2020/2069", xlim=c(80,93),col=colors(50)[1])
+for (i in 2:50){lines(density(expectancy[,i]), col=colors(50)[i])}
+
+```
+
+E le previsioni fatte sui mortality rates si riflettono sulla durata attesa di vita. Prevedendo uno spostamento della moda verso destra ma anche un appiattimento della curva che indica una maggiore variabilità.
+
+
+### Numero atteso di anni di vita vissuti dalla nascita
+
+Se fisso $l_{0} =100.000$  il numero iniziale di neotati, è immediatamente calcolabile il numero di anni di vita vissuti atteso come $T_{0} = l_{0} ∗ e_{0}$
+
+Per avere simulazioni di questa quantità allora non servirà altro che moltiplicare la precedente matrice di
+simulazioni di $e_{0}$ per 100.000.
+
+```{r}
+
+t0<-expectancy*100000
+head(t0)
+
+
+```
+
+
+Così è immediatamente immediatamente disponibile la distribuzione empirica, che sarà praticamente uguale a quella di $e_{0}.
+
+```{r}
+colors <- colorRampPalette(colors = c("blue", "yellow"))
+plot(density(t0[,1]),main="",xlab="T0-2020/2069",col=colors(50)[1],xlim=c(8000000,9300000))
+for (i in 2:50){lines(density(t0[,i]), col=colors(50)[i])}
+
+
+```
+
+
+### Numero atteso di anni di vita residui vissuti da una collettività di
+l50 individui di età 50. T50
+
+In maniera analoga a quanto fatto precedentemente posso ottenere delle lifetable basate su tutte le simulazioni degli $m_{x,t}$. Avrò una collezione di tavole di periodo per ogni simulazione
+
+
+```{r}
+ltFuntcion<-function(j){
+centralmrates<-matrix(nrow=101,ncol=50)
+centralfakeexposure<-matrix(nrow=101,ncol=50)
+for(k in 1:50){for (i in 1:101){centralmrates[i,k]<-listaemme[[i]][k,j]}}
+for(k in 1:50){for (i in 1:101){centralfakeexposure[i,k]<-k*100000}}
+Sim<-demogdata(centralmrates,centralfakeexposure,ages=c(0:100),years=seq(2020,2069,1),type = "mortality", label = "Try",name = "T")
+lt<-lifetable(Sim,type="period")
+return(lt)
+}
+
+```
+
+
+
+Dovrei allora poter ottenere $T_{x}$, ed in particolare T50. Andrà poi moltiplicata per 100.000 al fine di renderlo coerente con i numeri ottenuti in precedenza dato che qui la radice della tavola è 1.
+
+Per una simulazione:
+
+
+
+```{r}
+lt<-ltFuntcion(1)
+lt$Tx[51,]
+
+
+```
+
+
+```{r}
+MatriceT50<-matrix(nrow = 1000,ncol=50)
+MatriceT50<-as.data.frame(MatriceT50)
+colnames(MatriceT50)<-seq(2020,2069,1)
+MatriceT50[1,]<-lt$Tx[51,]
+head(MatriceT50)
+
+```
+
+
+Come fatto in precedenza riempio la matrice per tutte le simulazioni fatte
+
+
+```{r}
+
+for(i in 2:1000){
+lt<-ltFuntcion(i)
+MatriceT50[i,]<-lt$Tx[51,]
+}
+MatriceT50<-MatriceT50*100000
+head(MatriceT50)
+
+```
+
+
+E allora ancora, per ogni anno nel futuro (entro il 2069) ho mille determinazioni di T50, potrò allora trovare la distribuzione di probabilità empirica e fare dei grafici.
+
+Ad esempio per il 2023:
+
+```{r}
+
+
+plot(density(MatriceT50[,4]),main="",xlab="T50-2023")
+
+
+```
+
+Oppure per tutti gli anni:
+
+
+```{r}
+
+colors <- colorRampPalette(colors = c("green", "red"))
+plot(density(MatriceT50[,1]),main="",xlab="T50-2020/2069",col=colors(50)[1],xlim=c(3100000,4100000))
+for (i in 2:50){lines(density(MatriceT50[,i]), col=colors(50)[i])}
+
+```
+
+
+
